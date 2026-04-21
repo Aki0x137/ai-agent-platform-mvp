@@ -56,23 +56,23 @@
 
 ### Tests for User Story 1
 
-- [ ] T012 [P] [US1] Write PostgreSQL connector Specify specs in specs/postgres_connector_spec.py
-- [ ] T013 [P] [US1] Write REST connector Specify specs in specs/rest_connector_spec.py
-- [ ] T014 [P] [US1] Write InMemory connector Specify specs in specs/inmemory_connector_spec.py
-- [ ] T015 [P] [US1] Write Sandbox and Logs connector Specify specs in specs/reconciliation_tooling_spec.py
-- [ ] T016 [US1] Write reconciliation workflow Specify spec in specs/reconciliation_workflow_spec.py
-- [ ] T016a [US1] Add edge-case Specify scenarios (missing payouts, malformed FX rates, unavailable logs) in specs/reconciliation_workflow_spec.py
+- [X] T012 [P] [US1] Write PostgreSQL connector Specify specs in specs/postgres_connector_spec.py
+- [X] T013 [P] [US1] Write REST connector Specify specs in specs/rest_connector_spec.py
+- [X] T014 [P] [US1] Write InMemory connector Specify specs in specs/inmemory_connector_spec.py
+- [X] T015 [P] [US1] Write Sandbox and Logs connector Specify specs in specs/reconciliation_tooling_spec.py
+- [X] T016 [US1] Write reconciliation workflow Specify spec in specs/reconciliation_workflow_spec.py
+- [X] T016a [US1] Add edge-case Specify scenarios (missing payouts, malformed FX rates, unavailable logs) in specs/reconciliation_workflow_spec.py
 
 ### Implementation for User Story 1
 
-- [ ] T017 [P] [US1] Implement PostgreSQL connector in src/connectors/postgres_connector.py
-- [ ] T018 [P] [US1] Implement REST connector in src/connectors/rest_connector.py
-- [ ] T019 [P] [US1] Implement InMemory connector in src/connectors/inmemory_connector.py
-- [ ] T020 [P] [US1] Implement Sandbox connector in src/connectors/sandbox_connector.py
-- [ ] T021 [P] [US1] Implement Logs connector in src/connectors/logs_connector.py
-- [ ] T022 [US1] Implement reconciliation service in src/core/reconciliation_service.py
-- [ ] T023 [US1] Wire seeded data creation into docker/init.sql and data/generate_mock_data.py
-- [ ] T024 [US1] Update placeholder agent config for discrepancy investigation in config/reconciliation-agent.yaml
+- [X] T017 [P] [US1] Implement PostgreSQL connector in src/connectors/postgres_connector.py
+- [X] T018 [P] [US1] Implement REST connector in src/connectors/rest_connector.py
+- [X] T019 [P] [US1] Implement InMemory connector in src/connectors/inmemory_connector.py
+- [X] T020 [P] [US1] Implement Sandbox connector in src/connectors/sandbox_connector.py
+- [X] T021 [P] [US1] Implement Logs connector in src/connectors/logs_connector.py
+- [X] T022 [US1] Implement reconciliation service in src/core/reconciliation_service.py
+- [X] T023 [US1] Wire seeded data creation into docker/init.sql and data/generate_mock_data.py
+- [X] T024 [US1] Update placeholder agent config for discrepancy investigation in config/reconciliation-agent.yaml
 
 **Checkpoint**: User Story 1 is demoable without ticket creation.
 

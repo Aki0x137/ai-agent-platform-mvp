@@ -4,6 +4,11 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, Optional, Type
 
 from .base import Connector, ConnectorResult
+from .postgres_connector import PostgreSQLConnector
+from .rest_connector import RestApiConnector
+from .inmemory_connector import InMemoryConnector
+from .sandbox_connector import SandboxConnector
+from .logs_connector import LogsConnector
 
 ConnectorFactory = Callable[[str, dict[str, Any]], Connector]
 
@@ -33,4 +38,21 @@ class ConnectorRegistry:
         return list(cls._registry.keys())
 
 
-__all__ = ["Connector", "ConnectorResult", "ConnectorRegistry"]
+# Register all built-in connector implementations
+ConnectorRegistry.register("postgresql", PostgreSQLConnector)
+ConnectorRegistry.register("rest_api", RestApiConnector)
+ConnectorRegistry.register("inmemory", InMemoryConnector)
+ConnectorRegistry.register("sandbox", SandboxConnector)
+ConnectorRegistry.register("logs", LogsConnector)
+
+
+__all__ = [
+    "Connector",
+    "ConnectorResult",
+    "ConnectorRegistry",
+    "PostgreSQLConnector",
+    "RestApiConnector",
+    "InMemoryConnector",
+    "SandboxConnector",
+    "LogsConnector",
+]

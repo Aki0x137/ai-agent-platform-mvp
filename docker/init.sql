@@ -127,7 +127,52 @@ CREATE TABLE IF NOT EXISTS demo_fx_rates (
     UNIQUE(from_currency, to_currency, rate_date)
 );
 
--- NOTE: Sample agents and connectors will be created in P0.2 during demo data generation
+-- ── Seed: demo agent ─────────────────────────────────────────────────────────
+INSERT INTO agents (name, description, model_policy, system_prompt, tools, max_session_hours, created_by)
+VALUES (
+    'settlement-reconciliation-agent',
+    'End-of-day settlement reconciliation agent for FinAgent MVP demo.',
+    'hybrid',
+    'You are a settlement reconciliation agent. You compare internal payout records against exchange settlement data, identify discrepancies, collect log evidence, and prepare a structured report for human review.',
+    ARRAY['postgres.query', 'exchange.get_settlements', 'fx_rates.get', 'account_mapping.get', 'reconcile.run', 'logs.search'],
+    1,
+    'init.sql'
+)
+ON CONFLICT (name) DO NOTHING;
+
+-- ── Seed: demo connectors ────────────────────────────────────────────────────
+INSERT INTO connectors (name, type, config) VALUES
+    ('demo_postgres',      'postgresql', '{"host": "postgres", "port": 5432, "database": "finagentagent_db", "user": "finagentagent"}'),
+    ('mock_exchange',      'rest_api',   '{"base_url": "http://mock_exchange_api:8000"}'),
+    ('fx_rates_inmemory',  'inmemory',   '{"source": "config/fx_rates.json"}'),
+    ('account_mapping',    'inmemory',   '{"source": "config/account_mapping.json"}'),
+    ('reconcile_sandbox',  'sandbox',    '{"timeout_seconds": 30}'),
+    ('payment_gateway_logs','logs',      '{"log_path": "docker/fixtures/payment_gateway.log"}')
+ON CONFLICT (name) DO NOTHING;
+
+-- ── Seed: demo internal payouts ──────────────────────────────────────────────
+INSERT INTO demo_internal_payouts (payout_id, account_id, amount_usd, currency, settled_at, status) VALUES
+    ('PAYOUT-1001', 'ACC001', 1000.00,  'USD', '2026-04-20', 'settled'),
+    ('PAYOUT-1002', 'ACC002', 2150.25,  'EUR', '2026-04-20', 'pending_review'),
+    ('PAYOUT-1003', 'ACC003',  780.00,  'GBP', '2026-04-20', 'settled')
+ON CONFLICT (payout_id) DO NOTHING;
+
+-- ── Seed: demo exchange settlements ─────────────────────────────────────────
+-- PAYOUT-1001: exact match; PAYOUT-1002: amount mismatch (EUR slippage);
+-- PAYOUT-1003: absent (exchange has PAYOUT-1004 instead → two-way discrepancy)
+INSERT INTO demo_exchange_settlements (payout_id, account_id, amount_usd, currency, settled_at, status, exchange_timestamp) VALUES
+    ('PAYOUT-1001', 'ACC001', 1000.00,  'USD', '2026-04-20', 'settled', '2026-04-20T08:14:58Z'),
+    ('PAYOUT-1002', 'ACC002', 2098.75,  'EUR', '2026-04-20', 'settled', '2026-04-20T08:15:18Z'),
+    ('PAYOUT-1004', 'ACC003',  120.00,  'GBP', '2026-04-20', 'settled', '2026-04-20T09:01:00Z')
+ON CONFLICT (payout_id) DO NOTHING;
+
+-- ── Seed: demo FX rates ──────────────────────────────────────────────────────
+INSERT INTO demo_fx_rates (from_currency, to_currency, rate, rate_date, source) VALUES
+    ('USD', 'USD', 1.00000000,   '2026-04-20', 'generator'),
+    ('EUR', 'USD', 1.08695652,   '2026-04-20', 'generator'),
+    ('GBP', 'USD', 1.26582278,   '2026-04-20', 'generator'),
+    ('INR', 'USD', 0.01198322,   '2026-04-20', 'generator')
+ON CONFLICT (from_currency, to_currency, rate_date) DO NOTHING;
 
 -- Grant permissions
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO finagentagent;
