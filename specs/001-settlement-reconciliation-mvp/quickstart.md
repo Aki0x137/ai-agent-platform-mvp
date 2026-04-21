@@ -14,6 +14,22 @@ uv sync
 docker compose up -d
 ```
 
+## Validate local models (Phase 1.5)
+
+```bash
+source .venv/bin/activate
+docker compose up -d ollama
+docker compose exec ollama ollama pull mistral
+docker compose exec ollama ollama pull gemma:2b
+uv run python data/validate_model_latency.py --iterations 3
+```
+
+Expected result: both models return non-empty responses and a report is written to `data/generated/model_latency_report.json`.
+
+Baseline (to update after each environment rebuild):
+- mistral: p50=7370.93ms, p95=8693.56ms
+- gemma:2b: p50=3568.16ms, p95=3992.91ms
+
 ## Validate the mock-data checkpoint
 
 ```bash

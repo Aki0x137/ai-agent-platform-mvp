@@ -53,6 +53,14 @@ curl http://localhost:8000/health
 python -m specify specs/
 ```
 
+**6. Bootstrap local Ollama models for demo runs:**
+```bash
+docker compose up -d ollama
+docker compose exec ollama ollama pull mistral
+docker compose exec ollama ollama pull gemma:2b
+uv run python data/validate_model_latency.py --iterations 3
+```
+
 ---
 
 ## 🧪 Testing with Specify BDD

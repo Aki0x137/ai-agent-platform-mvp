@@ -19,6 +19,20 @@
 
 ---
 
+## Phase 1.5: Local Model Setup and Validation
+
+**Purpose**: Download, cache, and validate local LLM models (Mistral and Gemma) for latency benchmarking before agent implementation.
+
+- [X] T005a Select exact local model tags for this host and update `.env.example` (`LOCAL_MODEL`, `ALTERNATE_LOCAL_MODEL`)
+- [X] T005b Pull and cache Mistral model weights locally via Ollama (`ollama pull ${LOCAL_MODEL}`)
+- [X] T005c Pull and cache Gemma model weights locally via Ollama (`ollama pull ${ALTERNATE_LOCAL_MODEL}`)
+- [X] T005d Add model smoke-check script in `data/validate_model_latency.py` that runs one prompt against both models and verifies non-empty responses
+- [X] T005e Run latency validation for both models and record baseline p50/p95 timings in `specs/001-settlement-reconciliation-mvp/quickstart.md`
+
+**Checkpoint**: Both model weights are cached locally, both models return valid responses, and latency baseline is recorded with acceptable local-demo performance.
+
+---
+
 ## Phase 2: Foundational (Blocking Prerequisites)
 
 **Purpose**: Establish shared infrastructure that blocks every user story.
@@ -47,6 +61,7 @@
 - [ ] T014 [P] [US1] Write InMemory connector Specify specs in specs/inmemory_connector_spec.py
 - [ ] T015 [P] [US1] Write Sandbox and Logs connector Specify specs in specs/reconciliation_tooling_spec.py
 - [ ] T016 [US1] Write reconciliation workflow Specify spec in specs/reconciliation_workflow_spec.py
+- [ ] T016a [US1] Add edge-case Specify scenarios (missing payouts, malformed FX rates, unavailable logs) in specs/reconciliation_workflow_spec.py
 
 ### Implementation for User Story 1
 
@@ -74,6 +89,7 @@
 - [ ] T025 [P] [US2] Write audit logger Specify specs in specs/audit_logger_spec.py
 - [ ] T026 [P] [US2] Write session manager Specify specs in specs/session_manager_spec.py
 - [ ] T027 [P] [US2] Write session trace API Specify specs in specs/session_api_spec.py
+- [ ] T027a [US2] Add trace-completeness and redaction Specify scenarios for 100% tool-call visibility in specs/session_api_spec.py
 
 ### Implementation for User Story 2
 
@@ -82,6 +98,7 @@
 - [ ] T030 [US2] Implement LangGraph state flow for checkpoints in src/core/langgraph_agent.py
 - [ ] T031 [US2] Expose session status and trace endpoints in src/api/main.py
 - [ ] T032 [US2] Add minimal trace-view payload shaping in src/api/trace_view.py
+- [ ] T032a [US2] Enforce trace redaction and complete tool-call duration/routing capture in src/audit/audit_logger.py and src/api/trace_view.py
 
 **Checkpoint**: User Story 2 exposes a traceable, auditable session view.
 
@@ -98,6 +115,7 @@
 - [ ] T033 [P] [US3] Write MCP connector Specify specs in specs/mcp_connector_spec.py
 - [ ] T034 [P] [US3] Write approval-gate API Specify specs in specs/approval_api_spec.py
 - [ ] T035 [US3] Write end-to-end ticketing Specify spec in specs/ticket_creation_flow_spec.py
+- [ ] T035a [US3] Add MCP ticket-creation failure-path Specify scenario in specs/ticket_creation_flow_spec.py
 
 ### Implementation for User Story 3
 
@@ -106,6 +124,7 @@
 - [ ] T038 [US3] Implement approval gate handling in src/core/approval_service.py
 - [ ] T039 [US3] Expose approval endpoint in src/api/main.py
 - [ ] T040 [US3] Extend reconciliation workflow to create tickets after approval in src/core/langgraph_agent.py
+- [ ] T040a [US3] Handle MCP failure responses with auditable status updates in src/core/langgraph_agent.py and src/core/approval_service.py
 
 **Checkpoint**: User Story 3 completes the full platform demo with a controlled write action.
 
@@ -116,6 +135,9 @@
 - [ ] T041 [P] Update README quickstart and demo instructions in README.md
 - [ ] T042 [P] Add health and readiness dependency checks in src/api/main.py
 - [ ] T043 Run hygiene suite and record checkpoint outputs in specs/001-settlement-reconciliation-mvp/quickstart.md
+- [ ] T044 [P] Add explicit local-model bootstrap commands (`ollama serve`, pull, smoke check, latency check) to README.md and quickstart.md
+- [ ] T045 Add env/local-only config validation and remove misleading Vault placeholders in docker-compose.yml, .env.example, and src/config/agent_config.py
+- [ ] T046 Add benchmark step that records end-to-end run time (<60s target) in specs/001-settlement-reconciliation-mvp/quickstart.md
 
 ---
 
@@ -123,7 +145,8 @@
 
 ### Phase Dependencies
 
-- Phase 1 must complete before Phase 2.
+- Phase 1 must complete before Phase 1.5.
+- Phase 1.5 (local model setup and validation) must complete before Phase 2.
 - Phase 2 blocks all user stories.
 - User Story 1 is the MVP and should ship first.
 - User Stories 2 and 3 depend on Phase 2 and can proceed after User Story 1 is stable.
@@ -138,6 +161,7 @@
 ### Parallel Opportunities
 
 - T002, T003, T004 can run in parallel.
+- T005b and T005c can run in parallel after T005a.
 - T007, T008, T009, T010, T011 can run in parallel after T006 starts.
 - Connector specs and connector implementations for US1 can run in parallel by file.
 - Audit/session specs and implementation tasks in US2 can run in parallel where files do not overlap.
@@ -147,7 +171,7 @@
 
 ### MVP First
 
-1. Complete Phase 1 and Phase 2.
+1. Complete Phase 1, Phase 1.5, and Phase 2.
 2. Complete User Story 1.
 3. Validate the demo run and discrepancy report.
 4. Only then add traceability and approval-driven ticketing.
