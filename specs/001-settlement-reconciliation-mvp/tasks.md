@@ -86,19 +86,19 @@
 
 ### Tests for User Story 2
 
-- [ ] T025 [P] [US2] Write audit logger Specify specs in specs/audit_logger_spec.py
-- [ ] T026 [P] [US2] Write session manager Specify specs in specs/session_manager_spec.py
-- [ ] T027 [P] [US2] Write session trace API Specify specs in specs/session_api_spec.py
-- [ ] T027a [US2] Add trace-completeness and redaction Specify scenarios for 100% tool-call visibility in specs/session_api_spec.py
+- [X] T025 [P] [US2] Write audit logger Specify specs in specs/audit_logger_spec.py
+- [X] T026 [P] [US2] Write session manager Specify specs in specs/session_manager_spec.py
+- [X] T027 [P] [US2] Write session trace API Specify specs in specs/session_api_spec.py
+- [X] T027a [US2] Add trace-completeness and redaction Specify scenarios for 100% tool-call visibility in specs/session_api_spec.py
 
 ### Implementation for User Story 2
 
-- [ ] T028 [P] [US2] Implement immutable audit logger in src/audit/audit_logger.py
-- [ ] T029 [P] [US2] Implement Mem0-backed session manager in src/sessions/session_manager.py
-- [ ] T030 [US2] Implement LangGraph state flow for checkpoints in src/core/langgraph_agent.py
-- [ ] T031 [US2] Expose session status and trace endpoints in src/api/main.py
-- [ ] T032 [US2] Add minimal trace-view payload shaping in src/api/trace_view.py
-- [ ] T032a [US2] Enforce trace redaction and complete tool-call duration/routing capture in src/audit/audit_logger.py and src/api/trace_view.py
+- [X] T028 [P] [US2] Implement immutable audit logger in src/audit/audit_logger.py
+- [X] T029 [P] [US2] Implement Mem0-backed session manager in src/sessions/session_manager.py
+- [X] T030 [US2] Implement LangGraph state flow for checkpoints in src/core/langgraph_agent.py
+- [X] T031 [US2] Expose session status and trace endpoints in src/api/main.py
+- [X] T032 [US2] Add minimal trace-view payload shaping in src/api/trace_view.py
+- [X] T032a [US2] Enforce trace redaction and complete tool-call duration/routing capture in src/audit/audit_logger.py and src/api/trace_view.py
 
 **Checkpoint**: User Story 2 exposes a traceable, auditable session view.
 
