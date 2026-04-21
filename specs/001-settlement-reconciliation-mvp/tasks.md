@@ -37,12 +37,12 @@
 
 **Purpose**: Establish shared infrastructure that blocks every user story.
 
-- [ ] T006 Update Docker services and env wiring in docker-compose.yml
-- [ ] T007 [P] Add base connector interface in src/connectors/base.py
-- [ ] T008 [P] Add connector registry and shared result models in src/connectors/__init__.py
-- [ ] T009 Upgrade agent-config loading and validation in src/config/agent_config.py
-- [ ] T010 Upgrade model router for dual local-model configuration in src/router/__init__.py
-- [ ] T011 Add approval and ticket response models in src/models/__init__.py
+- [X] T006 Update Docker services and env wiring in docker-compose.yml
+- [X] T007 [P] Add base connector interface in src/connectors/base.py
+- [X] T008 [P] Add connector registry and shared result models in src/connectors/__init__.py
+- [X] T009 Upgrade agent-config loading and validation in src/config/agent_config.py
+- [X] T010 Upgrade model router for dual local-model configuration in src/router/__init__.py
+- [X] T011 Add approval and ticket response models in src/models/__init__.py
 
 **Checkpoint**: Foundational services and shared abstractions are ready for story implementation.
 

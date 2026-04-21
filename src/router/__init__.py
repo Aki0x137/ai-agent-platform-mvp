@@ -1,5 +1,6 @@
 """Model routing based on payload sensitivity"""
 import json
+import os
 import re
 from typing import Any, Dict, Optional
 from enum import Enum
@@ -100,8 +101,14 @@ class PayloadClassifier:
 class ModelRouter:
     """Routes LLM calls based on model policy and payload sensitivity"""
 
-    def __init__(self, local_model: str = "mistral", default_policy: str = "hybrid"):
+    def __init__(
+        self,
+        local_model: str = "mistral",
+        alternate_local_model: str = "gemma:2b",
+        default_policy: str = "hybrid",
+    ):
         self.local_model = local_model
+        self.alternate_local_model = alternate_local_model
         self.default_policy = default_policy
         self.classifier = PayloadClassifier()
 
@@ -146,22 +153,28 @@ class ModelRouter:
         """
         return self.classifier.redact_sensitive(payload)
 
-    def get_model_endpoint(self, routing_decision: RoutingDecision) -> Dict[str, Any]:
+    def select_local_model(self, payload: Any, tool_name: Optional[str] = None) -> str:
+        """Select a local Ollama model based on tool and payload context."""
+        if tool_name and "analysis" in tool_name.lower():
+            return self.alternate_local_model
+        return self.local_model
+
+    def get_model_endpoint(self, routing_decision: RoutingDecision, payload: Any = None, tool_name: Optional[str] = None) -> Dict[str, Any]:
         """Get the endpoint config for the routing decision"""
         if routing_decision == RoutingDecision.LOCAL:
+            chosen_model = self.select_local_model(payload, tool_name)
             return {
                 "type": "ollama",
-                "model": self.local_model,
-                "base_url": "http://ollama:11434",
-                "timeout": 120,
+                "model": chosen_model,
+                "base_url": os.getenv("OLLAMA_HOST", "http://ollama:11434"),
+                "timeout": int(os.getenv("LOCAL_MODEL_TIMEOUT_SECONDS", 120)),
             }
-        else:  # CLOUD or REDACTED
-            return {
-                "type": "openai",
-                "model": "gpt-3.5-turbo",
-                "base_url": "https://api.openai.com/v1",
-                "timeout": 60,
-            }
+        return {
+            "type": "openai",
+            "model": os.getenv("CLOUD_MODEL", "gpt-3.5-turbo"),
+            "base_url": os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+            "timeout": int(os.getenv("CLOUD_API_TIMEOUT_SECONDS", 60)),
+        }
 
     def get_routing_info(
         self,

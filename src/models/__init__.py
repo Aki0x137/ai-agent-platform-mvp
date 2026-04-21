@@ -226,6 +226,39 @@ class SessionTraceResponse(BaseModel):
     error: Optional[str] = None
 
 
+class ApprovalStatus(str, Enum):
+    """Human approval status for a session or action."""
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class ApprovalDecision(BaseModel):
+    """Approval decision payload."""
+    session_id: UUID
+    approved_by: Optional[str] = None
+    status: ApprovalStatus = ApprovalStatus.PENDING
+    comment: Optional[str] = None
+    decided_at: Optional[datetime] = None
+
+
+class TicketReference(BaseModel):
+    """Ticket identifier and metadata."""
+    ticket_id: str
+    ticket_url: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    session_id: Optional[UUID] = None
+    summary: Optional[str] = None
+
+
+class TicketResponse(BaseModel):
+    """Result of ticket creation through MCP."""
+    success: bool
+    ticket_reference: Optional[TicketReference] = None
+    error: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 class HealthCheckResponse(BaseModel):
     """Health check status"""
     status: str  # healthy | degraded | unhealthy

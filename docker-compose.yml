@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Local LLM - Ollama with Mistral 7B
   ollama:
@@ -101,9 +99,10 @@ services:
       
       # Model Config
       LOCAL_MODEL: mistral
+      ALTERNATE_LOCAL_MODEL: gemma:2b
+      DEFAULT_MODEL_POLICY: hybrid
       MODEL_POLICY: hybrid
-      
-      # API Config
+      MOCK_EXCHANGE_API_URL: http://mock_exchange_api:8000
       API_PORT: 8000
       API_HOST: 0.0.0.0
       
@@ -124,9 +123,23 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      mock_exchange_api:
+        condition: service_started
     networks:
       - finagentagent_network
     command: python -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  mock_exchange_api:
+    build:
+      context: ./docker/mock_exchange_api
+      dockerfile: Dockerfile
+    container_name: finagentagent-mock-exchange
+    ports:
+      - "9000:8000"
+    environment:
+      - LOG_LEVEL=INFO
+    networks:
+      - finagentagent_network
 
 volumes:
   ollama_data:
