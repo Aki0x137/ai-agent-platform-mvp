@@ -1,0 +1,23 @@
+{
+  "base_url": "http://localhost:11434",
+  "prompt": "Summarize settlement variance in one sentence.",
+  "generated_at_epoch": 1776773445,
+  "results": [
+    {
+      "model": "mistral",
+      "iterations": 3,
+      "p50_ms": 7370.93,
+      "p95_ms": 8693.56,
+      "avg_ms": 7805.21,
+      "max_ms": 8840.52
+    },
+    {
+      "model": "gemma:2b",
+      "iterations": 3,
+      "p50_ms": 3568.16,
+      "p95_ms": 3992.91,
+      "avg_ms": 3704.68,
+      "max_ms": 4040.1
+    }
+  ]
+}

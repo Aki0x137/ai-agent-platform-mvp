@@ -1,0 +1,59 @@
+[project]
+name = "ai-agent-platform-mvp"
+version = "0.1.0"
+description = "Internal AI Agent Platform MVP - LangGraph + Ollama + Mem0"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    # Orchestration & LLM
+    "langgraph==0.0.65",
+    "ollama==0.6.1",
+    # Memory & Session Management
+    "mem0ai==0.0.8",
+    "redis==5.0.1",
+    # API & Web
+    "fastapi==0.109.0",
+    "uvicorn==0.27.0",
+    "pydantic==2.13.3",
+    "pydantic-settings==2.1.0",
+    # Database & ORM
+    "sqlalchemy==2.0.24",
+    "psycopg2-binary==2.9.9",
+    "alembic==1.13.1",
+    # Data handling
+    "pandas==2.1.4",
+    "pyarrow==14.0.1",
+    # Async & Concurrency
+    "aiohttp==3.9.1",
+    "asyncpg==0.29.0",
+    # Security & Secrets
+    "pydantic-extra-types==2.3.0",
+    "python-dotenv==1.0.0",
+    "hvac==1.2.1",
+    # Observability
+    "prometheus-client==0.19.0",
+    "structlog==24.1.0",
+    # Testing & Quality
+    "specify==0.0.9",
+    "pytest==7.4.3",
+    "pytest-asyncio==0.23.2",
+    "pytest-cov==4.1.0",
+    # Utils
+    "python-dateutil==2.8.2",
+    "pytz==2024.1",
+    "pyyaml==6.0.1",
+    "httpx==0.28.1",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["specs"]
+python_files = "*_spec.py"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/specs/*"]

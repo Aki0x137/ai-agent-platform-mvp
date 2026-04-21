@@ -1,0 +1,23 @@
+{
+  "generated_for": "2026-04-20",
+  "mappings": [
+    {
+      "account_id": "ACC001",
+      "exchange_account_id": "EX-001",
+      "entity": "Alpha Treasury",
+      "base_currency": "USD"
+    },
+    {
+      "account_id": "ACC002",
+      "exchange_account_id": "EX-002",
+      "entity": "Beta Markets",
+      "base_currency": "EUR"
+    },
+    {
+      "account_id": "ACC003",
+      "exchange_account_id": "EX-003",
+      "entity": "Gamma Ops",
+      "base_currency": "GBP"
+    }
+  ]
+}
