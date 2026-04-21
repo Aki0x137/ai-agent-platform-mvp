@@ -1,0 +1,32 @@
+{
+  "as_of": "2026-04-20",
+  "base_currency": "USD",
+  "rates": {
+    "USD": 1.0,
+    "EUR": 0.92,
+    "GBP": 0.79,
+    "INR": 83.45
+  },
+  "pairs": [
+    {
+      "from_currency": "USD",
+      "to_currency": "USD",
+      "rate": 1.0
+    },
+    {
+      "from_currency": "EUR",
+      "to_currency": "USD",
+      "rate": 1.08695652
+    },
+    {
+      "from_currency": "GBP",
+      "to_currency": "USD",
+      "rate": 1.26582278
+    },
+    {
+      "from_currency": "INR",
+      "to_currency": "USD",
+      "rate": 0.01198322
+    }
+  ]
+}

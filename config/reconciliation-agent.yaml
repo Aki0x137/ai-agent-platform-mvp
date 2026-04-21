@@ -1,0 +1,23 @@
+# Settlement Reconciliation Agent Config
+#
+# NOTE: This config will be finalized during implementation (Phase P2.2+).
+# For now, it is a placeholder.
+# 
+# The agent will investigate payout discrepancies by:
+# 1. Reading internal payout ledger (PostgreSQL)
+# 2. Fetching exchange settlement data (REST API)
+# 3. Looking up FX rates and account mapping (InMemory)
+# 4. Running a Python reconciliation script (Sandbox)
+# 5. Checking payment gateway logs for root cause (Logs)
+# 6. Creating a Jira ticket if discrepancy > $500 (MCP)
+#
+# See IMPLEMENTATION_PLAN.md Task P3.1 for full config details.
+
+name: settlement-reconciliation-agent
+description: "[Placeholder - see IMPLEMENTATION_PLAN.md Task P3.1]"
+version: 1
+model_policy: hybrid
+system_prompt: "[Will be filled in during P3.1]"
+tools: []
+human_gates: []
+max_session_hours: 1

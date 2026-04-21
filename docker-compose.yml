@@ -1,0 +1,145 @@
+version: '3.8'
+
+services:
+  # Local LLM - Ollama with Mistral 7B
+  ollama:
+    image: ollama/ollama:latest
+    container_name: finagentagent-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - finagentagent_network
+    command: serve
+
+  # PostgreSQL - Demo database & agent registry
+  postgres:
+    image: postgres:15-alpine
+    container_name: finagentagent-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: finagentagent
+      POSTGRES_PASSWORD: finagentagent_dev_pwd_123
+      POSTGRES_DB: finagentagent_db
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finagentagent -d finagentagent_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - finagentagent_network
+
+  # Redis - Session memory & cache
+  redis:
+    image: redis:7-alpine
+    container_name: finagentagent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - finagentagent_network
+    command: redis-server --appendonly yes
+
+  # pgAdmin - PostgreSQL GUI (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: finagentagent-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@finagentagent.local
+      PGADMIN_DEFAULT_PASSWORD: admin_pwd_123
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - finagentagent_network
+    profiles:
+      - with-ui
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # FastAPI Backend
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PYTHON_VERSION: "3.11"
+    container_name: finagentagent-app
+    ports:
+      - "8000:8000"
+    environment:
+      # Service URLs
+      OLLAMA_HOST: http://ollama:11434
+      POSTGRES_DSN: postgresql://finagentagent:finagentagent_dev_pwd_123@postgres:5432/finagentagent_db
+      REDIS_URL: redis://redis:6379/0
+      
+      # App Config
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      DEBUG: "true"
+      
+      # Model Config
+      LOCAL_MODEL: mistral
+      MODEL_POLICY: hybrid
+      
+      # API Config
+      API_PORT: 8000
+      API_HOST: 0.0.0.0
+      
+      # Audit Config
+      AUDIT_DB_PATH: /data/audit.db
+      
+      # Secrets (mock for MVP)
+      VAULT_ADDR: http://vault:8200  # placeholder, not running yet
+      VAULT_TOKEN: dev_token_xyz
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - audit_data:/data
+    depends_on:
+      ollama:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - finagentagent_network
+    command: python -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  ollama_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  audit_data:
+    driver: local
+
+networks:
+  finagentagent_network:
+    driver: bridge

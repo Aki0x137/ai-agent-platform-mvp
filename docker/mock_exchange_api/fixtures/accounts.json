@@ -1,0 +1,19 @@
+{
+  "accounts": {
+    "ACC001": {
+      "exchange_account_id": "EX-001",
+      "entity": "Alpha Treasury",
+      "region": "US"
+    },
+    "ACC002": {
+      "exchange_account_id": "EX-002",
+      "entity": "Beta Markets",
+      "region": "EU"
+    },
+    "ACC003": {
+      "exchange_account_id": "EX-003",
+      "entity": "Gamma Ops",
+      "region": "UK"
+    }
+  }
+}

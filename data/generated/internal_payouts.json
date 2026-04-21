@@ -1,0 +1,29 @@
+{
+  "settlement_date": "2026-04-20",
+  "records": [
+    {
+      "payout_id": "PAYOUT-1001",
+      "account_id": "ACC001",
+      "amount_usd": 1000.0,
+      "currency": "USD",
+      "settled_at": "2026-04-20",
+      "status": "settled"
+    },
+    {
+      "payout_id": "PAYOUT-1002",
+      "account_id": "ACC002",
+      "amount_usd": 2150.25,
+      "currency": "EUR",
+      "settled_at": "2026-04-20",
+      "status": "pending_review"
+    },
+    {
+      "payout_id": "PAYOUT-1003",
+      "account_id": "ACC003",
+      "amount_usd": 780.0,
+      "currency": "GBP",
+      "settled_at": "2026-04-20",
+      "status": "settled"
+    }
+  ]
+}
