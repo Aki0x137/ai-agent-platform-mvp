@@ -259,6 +259,36 @@ class TicketResponse(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+class InvestigationTicket(BaseModel):
+    """Investigation ticket created after human approval."""
+    ticket_id: str
+    session_id: UUID
+    discrepancy_ids: List[str] = Field(default_factory=list)
+    summary: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: Optional[str] = None
+    ticket_url: Optional[str] = None
+    status: str = "open"
+
+
+class ApprovalRequest(BaseModel):
+    """Request for human approval of a session action."""
+    session_id: UUID
+    action_type: str  # e.g., "create_ticket", "write_to_system"
+    payload_summary: Optional[str] = None
+    requested_by: Optional[str] = None
+    requested_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: Optional[datetime] = None
+
+
+class ApproveSessionResponse(BaseModel):
+    """Response returned after a human approves or rejects a session."""
+    session_id: UUID
+    decision: ApprovalDecision
+    ticket_reference: Optional[TicketReference] = None
+    message: Optional[str] = None
+
+
 class HealthCheckResponse(BaseModel):
     """Health check status"""
     status: str  # healthy | degraded | unhealthy

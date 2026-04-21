@@ -88,14 +88,22 @@ class PayloadClassifier:
 
     @classmethod
     def _is_sensitive_key(cls, key: str) -> bool:
-        """Check if a key name indicates sensitive data"""
+        """Check if a key name indicates sensitive data.
+
+        Uses word-segment matching (split on _, -, space) to avoid
+        false positives like 'accounts' matching 'account'.
+        """
         sensitive_keys = {
             "ssn", "account", "password", "token", "secret", "api_key",
             "credit_card", "card_number", "cvv", "pin", "routing",
             "tin", "passport", "license", "dob", "date_of_birth",
             "pii", "sensitive"
         }
-        return any(sk in key.lower() for sk in sensitive_keys)
+        key_lower = key.lower()
+        if key_lower in sensitive_keys:
+            return True
+        segments = set(re.split(r"[_\-\s]", key_lower))
+        return bool(segments & sensitive_keys)
 
 
 class ModelRouter:
