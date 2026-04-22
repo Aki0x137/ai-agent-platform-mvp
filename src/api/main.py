@@ -9,6 +9,11 @@ Endpoints implemented in this module:
 """
 from __future__ import annotations
 
+from rich.console import Console
+console = Console()
+
+
+
 import asyncio
 import os
 from datetime import datetime

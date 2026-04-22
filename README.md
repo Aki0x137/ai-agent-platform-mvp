@@ -76,8 +76,12 @@ PYTHONPATH=. uv run python -m specify specs/*_spec.py
 
 ### 5. Trigger a Core Reconciliation Run (Live API)
 
+Alternatively, you can run the automated interactive Python script:
 ```bash
-curl -X POST http://localhost:8000/agents/trigger \
+python run_demo.py
+```
+
+```bash
   -H 'Content-Type: application/json' \
   -d '{"agent_name":"settlement-reconciliation-agent","params":{"settlement_date":"2026-04-20"}}'
 ```
@@ -91,7 +95,7 @@ curl http://localhost:8000/sessions/<session_id>
 
 ### 7. Approve the Paused Session
 
-The run will halt at a human approval gate if discrepancies are above \$500:
+The run will halt at a human approval gate if discrepancies are above ₹500:
 ```bash
 curl -X POST http://localhost:8000/sessions/<session_id>/approve \
   -H 'Content-Type: application/json' \

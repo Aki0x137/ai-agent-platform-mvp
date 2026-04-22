@@ -2,7 +2,7 @@
   "accounts": {
     "ACC001": {
       "exchange_account_id": "EX-001",
-      "entity": "Alpha Treasury",
+      "entity": "Alpha Product Ops",
       "region": "US"
     },
     "ACC002": {

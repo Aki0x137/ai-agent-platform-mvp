@@ -4,6 +4,9 @@ from __future__ import annotations
 import time
 from typing import Any
 
+from rich.console import Console
+console = Console()
+
 from .base import Connector, ConnectorResult
 
 
@@ -46,6 +49,7 @@ class PostgreSQLConnector(Connector):
           params (list): Positional parameters (default []).
         """
         sql = request.get("sql")
+        console.print(f"[bold blue]🔌 Connector ({self.name}):[/bold blue] Querying Postgres: [dim]{sql}[/dim]")
         if not sql:
             return ConnectorResult(
                 success=False,

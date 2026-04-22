@@ -1,8 +1,8 @@
 {
   "as_of": "2026-04-20",
-  "base_currency": "USD",
+  "base_currency": "INR",
   "rates": {
-    "USD": 1.0,
+    "INR": 1.0,
     "EUR": 0.92,
     "GBP": 0.79,
     "INR": 83.45

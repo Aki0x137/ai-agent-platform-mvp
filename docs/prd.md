@@ -8,7 +8,7 @@
 
 ## 1. Problem Statement
 
-Internal teams (analytics, ops, compliance, credit, treasury) need to automate multi-step workflows that span data warehouses, core banking systems, internal APIs, and document stores. Today this requires either custom scripting per team or outsourcing to third-party SaaS agents — both carry cost, security risk, and integration burden.
+Internal teams (analytics, ops, compliance, credit, product operations) need to automate multi-step workflows that span data warehouses, core banking systems, internal APIs, and document stores. Today this requires either custom scripting per team or outsourcing to third-party SaaS agents — both carry cost, security risk, and integration burden.
 
 **FinAgent** is an internal, self-hosted agent platform that lets any internal team define, deploy, and run AI agents against the org's own data and APIs — with no changes required from application teams owning those systems.
 
@@ -39,7 +39,7 @@ Internal teams (analytics, ops, compliance, credit, treasury) need to automate m
 
 **Agent Builder** — internal engineer or data analyst who defines agents, connects tools, and ships to internal clients.
 
-**Agent Consumer** — business user (ops, compliance, treasury analyst) who runs pre-built agents via a simple UI or Slack trigger, with no knowledge of the underlying model.
+**Agent Consumer** — business user (ops, compliance, product manager) who runs pre-built agents via a simple UI or Slack trigger, with no knowledge of the underlying model.
 
 **Platform Admin** — controls model routing policy, secret management, access controls, and billing visibility.
 
@@ -89,7 +89,7 @@ name: reconciliation-agent
 model_policy: hybrid           # sensitive ops → local model
 system_prompt: |
   You are a reconciliation analyst. Compare ledger entries
-  against DW records and flag discrepancies > $500.
+  against DW records and flag discrepancies > ₹500.
 tools:
   - core_banking.read_ledger
   - snowflake.query
@@ -288,7 +288,7 @@ Audit Logger (immutable, async) ──▶ SIEM / long-term store
 | 3 | For core banking (Oracle): will the DBA team provision a read replica or grant read-only service account on prod? Read replica preferred for performance isolation. | DBA / Core Banking team | Connector v1 |
 | 4 | Kafka: are there existing consumer groups with lag alerting? FinAgent needs its own consumer group; confirm no offset conflicts with downstream consumers. | Data Platform team | Connector v1 |
 | 5 | Human-in-the-loop gate delivery: Slack only, or also email? Does Slack approval require a bot in regulated channels? | Compliance + Comms | Phase 1 |
-| 6 | Audit log retention: 7 years is baseline assumption. Confirm regulatory requirement per product line (lending vs payments vs treasury). | Risk & Compliance | Before GA |
+| 6 | Audit log retention: 7 years is baseline assumption. Confirm regulatory requirement per product line (lending vs payments vs product operations). | Risk & Compliance | Before GA |
 | 7 | Cost attribution: should token / compute costs be charged back to consuming team's cost center? | Finance + Platform | Before GA |
 | 8 | Do any source systems have rate limits on their reporting APIs or read replicas that need to be honoured at the connector layer? | Application teams | Connector v1 |
 

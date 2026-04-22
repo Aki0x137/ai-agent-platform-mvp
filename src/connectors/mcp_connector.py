@@ -1,6 +1,9 @@
 """Stub-backed MCP connector for investigation ticket creation."""
 from __future__ import annotations
 
+from rich.console import Console
+console = Console()
+
 import json
 import os
 import time
@@ -35,6 +38,7 @@ class MCPConnector(Connector):
           simulate_failure (bool): if true, return the failure stub.
           summary/evidence/session_id: optional metadata for callers.
         """
+        console.print(f"[bold blue]🔌 Connector ({self.name}):[/bold blue] Processing MCP action '[yellow]{request.get('action')}[/yellow]'")
         action = request.get("action")
         if not action:
             return ConnectorResult(
