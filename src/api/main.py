@@ -18,7 +18,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import structlog
 
-from src.models import HealthCheckResponse, TriggerAgentRequest
+from src.models import ApproveSessionRequest, HealthCheckResponse, TriggerAgentRequest
 
 # Configure logging
 structlog.configure(
@@ -64,6 +64,7 @@ app.add_middleware(
 _session_manager = None  # SessionManager instance
 _audit_logger = None     # AuditLogger instance
 _agent = None            # ReconciliationAgent instance
+_approval_service = None # ApprovalService instance
 
 
 def _get_sm():
@@ -101,31 +102,95 @@ def _get_agent():
     return _agent
 
 
+def _get_approval_service():
+    global _approval_service
+    if _approval_service is None:
+        from src.core.approval_service import ApprovalService
+        _approval_service = ApprovalService(
+            session_manager=_get_sm(),
+            audit_logger=_get_al(),
+            agent=_get_agent(),
+        )
+    return _approval_service
+
+
+async def _check_ollama_health() -> str:
+    """Check the configured Ollama host."""
+    try:
+        import httpx
+
+        base_url = os.getenv("OLLAMA_HOST", "http://ollama:11434").rstrip("/")
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            resp = await client.get(f"{base_url}/api/tags")
+        return "healthy" if resp.status_code == 200 else "unhealthy"
+    except Exception as exc:
+        logger.warning("Ollama health check failed", error=str(exc))
+        return "unhealthy"
+
+
+async def _check_postgres_health() -> str:
+    """Check the configured PostgreSQL DSN with a lightweight query."""
+    dsn = os.getenv("POSTGRES_DSN", "")
+    if not dsn:
+        logger.warning("Postgres health check failed", error="POSTGRES_DSN is not configured")
+        return "unhealthy"
+
+    try:
+        import asyncpg
+
+        conn = await asyncpg.connect(dsn=dsn, timeout=2)
+        try:
+            await conn.execute("SELECT 1")
+        finally:
+            await conn.close()
+        return "healthy"
+    except Exception as exc:
+        logger.warning("Postgres health check failed", error=str(exc))
+        return "unhealthy"
+
+
+async def _check_redis_health() -> str:
+    """Check the configured Redis URL with PING."""
+    redis_url = os.getenv("REDIS_URL", "")
+    if not redis_url:
+        logger.warning("Redis health check failed", error="REDIS_URL is not configured")
+        return "unhealthy"
+
+    try:
+        import redis.asyncio as redis
+
+        client = redis.from_url(redis_url, socket_connect_timeout=2, socket_timeout=2)
+        try:
+            is_healthy = await client.ping()
+        finally:
+            close = getattr(client, "aclose", None)
+            if close is not None:
+                await close()
+            else:
+                await client.close()
+        return "healthy" if is_healthy else "unhealthy"
+    except Exception as exc:
+        logger.warning("Redis health check failed", error=str(exc))
+        return "unhealthy"
+
+
 # ── Health check ─────────────────────────────────────────────────────────────
 
 @app.get("/health", response_model=HealthCheckResponse)
 async def health_check() -> HealthCheckResponse:
     """Readiness check with per-dependency status."""
+    ollama_status, postgres_status, redis_status = await asyncio.gather(
+        _check_ollama_health(),
+        _check_postgres_health(),
+        _check_redis_health(),
+    )
+
     services: Dict[str, str] = {
         "api": "healthy",
-        "ollama": "unknown",
-        "postgres": "unknown",
-        "redis": "unknown",
+        "ollama": ollama_status,
+        "postgres": postgres_status,
+        "redis": redis_status,
     }
-
-    try:
-        import aiohttp
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.get(
-                    "http://ollama:11434/api/tags",
-                    timeout=aiohttp.ClientTimeout(total=2),
-                ) as resp:
-                    services["ollama"] = "healthy" if resp.status == 200 else "unhealthy"
-            except Exception:
-                services["ollama"] = "unhealthy"
-    except Exception:
-        pass
 
     unhealthy = sum(1 for s in services.values() if s == "unhealthy")
     if unhealthy == 0:
@@ -153,6 +218,7 @@ async def root():
             "health": "/health",
             "agents": "/agents",
             "sessions": "/sessions/{session_id}",
+            "approve": "/sessions/{session_id}/approve",
             "docs": "/docs",
         },
     }
@@ -248,6 +314,24 @@ async def get_session(session_id: str):
 
     from src.api.trace_view import shape_trace
     return shape_trace(session, audit_events)
+
+
+@app.post("/sessions/{session_id}/approve")
+async def approve_session(session_id: str, request: ApproveSessionRequest):
+    """Apply an approval decision to a paused session."""
+    approval_service = _get_approval_service()
+
+    try:
+        return await approval_service.decide(
+            session_id=session_id,
+            approved_by=request.approved_by,
+            comment=request.comment,
+            status=request.status.value,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 # ── Entry point ────────────────────────────────────────────────────────────────

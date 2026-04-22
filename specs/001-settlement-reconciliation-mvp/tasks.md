@@ -60,6 +60,7 @@
 - [X] T013 [P] [US1] Write REST connector Specify specs in specs/rest_connector_spec.py
 - [X] T014 [P] [US1] Write InMemory connector Specify specs in specs/inmemory_connector_spec.py
 - [X] T015 [P] [US1] Write Sandbox and Logs connector Specify specs in specs/reconciliation_tooling_spec.py
+- [X] T015a [US1] Split Logs connector coverage into specs/logs_connector_spec.py so Specify discovers and runs the LogsConnectorSpec cases
 - [X] T016 [US1] Write reconciliation workflow Specify spec in specs/reconciliation_workflow_spec.py
 - [X] T016a [US1] Add edge-case Specify scenarios (missing payouts, malformed FX rates, unavailable logs) in specs/reconciliation_workflow_spec.py
 
@@ -99,6 +100,7 @@
 - [X] T031 [US2] Expose session status and trace endpoints in src/api/main.py
 - [X] T032 [US2] Add minimal trace-view payload shaping in src/api/trace_view.py
 - [X] T032a [US2] Enforce trace redaction and complete tool-call duration/routing capture in src/audit/audit_logger.py and src/api/trace_view.py
+- [X] T032b [US2] Persist reconciliation output and summary before entering the paused approval state in src/core/langgraph_agent.py
 
 **Checkpoint**: User Story 2 exposes a traceable, auditable session view.
 
@@ -112,19 +114,20 @@
 
 ### Tests for User Story 3
 
-- [ ] T033 [P] [US3] Write MCP connector Specify specs in specs/mcp_connector_spec.py
-- [ ] T034 [P] [US3] Write approval-gate API Specify specs in specs/approval_api_spec.py
-- [ ] T035 [US3] Write end-to-end ticketing Specify spec in specs/ticket_creation_flow_spec.py
-- [ ] T035a [US3] Add MCP ticket-creation failure-path Specify scenario in specs/ticket_creation_flow_spec.py
+- [X] T033 [P] [US3] Write MCP connector Specify specs in specs/mcp_connector_spec.py
+- [X] T034 [P] [US3] Write approval-gate API Specify specs in specs/approval_api_spec.py
+- [X] T035 [US3] Write end-to-end ticketing Specify spec in specs/ticket_creation_flow_spec.py
+- [X] T035a [US3] Add MCP ticket-creation failure-path Specify scenario in specs/ticket_creation_flow_spec.py
 
 ### Implementation for User Story 3
 
-- [ ] T036 [P] [US3] Implement MCP connector in src/connectors/mcp_connector.py
-- [ ] T037 [P] [US3] Implement MCP stub output fixture in docker/mcp_stub/
-- [ ] T038 [US3] Implement approval gate handling in src/core/approval_service.py
-- [ ] T039 [US3] Expose approval endpoint in src/api/main.py
-- [ ] T040 [US3] Extend reconciliation workflow to create tickets after approval in src/core/langgraph_agent.py
-- [ ] T040a [US3] Handle MCP failure responses with auditable status updates in src/core/langgraph_agent.py and src/core/approval_service.py
+- [X] T036 [P] [US3] Implement MCP connector in src/connectors/mcp_connector.py
+- [X] T037 [P] [US3] Implement MCP stub output fixture in docker/mcp_stub/
+- [X] T038 [US3] Implement approval gate handling in src/core/approval_service.py
+- [X] T039 [US3] Expose approval endpoint in src/api/main.py
+- [X] T040 [US3] Extend reconciliation workflow to create tickets after approval in src/core/langgraph_agent.py
+- [X] T040a [US3] Handle MCP failure responses with auditable status updates in src/core/langgraph_agent.py and src/core/approval_service.py
+- [X] T040b [US3] Add resume-from-paused session flow after approval in src/core/langgraph_agent.py and src/core/approval_service.py
 
 **Checkpoint**: User Story 3 completes the full platform demo with a controlled write action.
 
@@ -133,11 +136,13 @@
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 - [ ] T041 [P] Update README quickstart and demo instructions in README.md
-- [ ] T042 [P] Add health and readiness dependency checks in src/api/main.py
+- [X] T042 [P] Add health and readiness dependency checks in src/api/main.py
+- [X] T042a [P] Probe Postgres and Redis in /health and surface readiness failures without silently swallowing dependency errors in src/api/main.py
 - [ ] T043 Run hygiene suite and record checkpoint outputs in specs/001-settlement-reconciliation-mvp/quickstart.md
 - [ ] T044 [P] Add explicit local-model bootstrap commands (`ollama serve`, pull, smoke check, latency check) to README.md and quickstart.md
 - [ ] T045 Add env/local-only config validation and remove misleading Vault placeholders in docker-compose.yml, .env.example, and src/config/agent_config.py
 - [ ] T046 Add benchmark step that records end-to-end run time (<60s target) in specs/001-settlement-reconciliation-mvp/quickstart.md
+- [ ] T046a Reconcile session-storage wording in specs/001-settlement-reconciliation-mvp/tasks.md, plan.md, and related docs with the implemented SQLite-backed session manager or replace it with a true Mem0-backed implementation
 
 ---
 

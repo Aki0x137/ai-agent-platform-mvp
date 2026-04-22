@@ -9,6 +9,7 @@ from .rest_connector import RestApiConnector
 from .inmemory_connector import InMemoryConnector
 from .sandbox_connector import SandboxConnector
 from .logs_connector import LogsConnector
+from .mcp_connector import MCPConnector
 
 ConnectorFactory = Callable[[str, dict[str, Any]], Connector]
 
@@ -44,6 +45,7 @@ ConnectorRegistry.register("rest_api", RestApiConnector)
 ConnectorRegistry.register("inmemory", InMemoryConnector)
 ConnectorRegistry.register("sandbox", SandboxConnector)
 ConnectorRegistry.register("logs", LogsConnector)
+ConnectorRegistry.register("mcp", MCPConnector)
 
 
 __all__ = [
@@ -55,4 +57,5 @@ __all__ = [
     "InMemoryConnector",
     "SandboxConnector",
     "LogsConnector",
+    "MCPConnector",
 ]

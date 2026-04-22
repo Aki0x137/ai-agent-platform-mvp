@@ -11,6 +11,7 @@ with httpx 0.28's removed ``app=`` keyword on httpx.Client.__init__.
 import asyncio
 import os
 import tempfile
+from unittest.mock import patch
 
 import httpx
 from specify import ObjectBehavior
@@ -43,6 +44,7 @@ def _setup_app():
     al = AuditLogger(db_path=_TMP_AUDIT)
     m._session_manager = sm
     m._audit_logger = al
+    m._approval_service = None
 
     class _MockAgent:
         def run(self, session_id, settlement_date):
@@ -55,6 +57,21 @@ def _setup_app():
             return {"status": "completed"}
 
     m._agent = _MockAgent()
+    return sm, al
+
+
+def _setup_real_app():
+    """Inject temp DBs and reset the real reconciliation agent."""
+    import src.api.main as m
+    from src.sessions.session_manager import SessionManager
+    from src.audit.audit_logger import AuditLogger
+
+    sm = SessionManager(db_path=_TMP_SESSIONS)
+    al = AuditLogger(db_path=_TMP_AUDIT)
+    m._session_manager = sm
+    m._audit_logger = al
+    m._agent = None
+    m._approval_service = None
     return sm, al
 
 
@@ -186,3 +203,62 @@ class SessionApiSpec(ObjectBehavior):
         tc_input = pg_calls[0]["input"]
         assert tc_input["password"] == "***REDACTED***", f"Expected redaction: {tc_input}"
         assert tc_input["sql"] == "SELECT *", f"Non-sensitive field must not be redacted: {tc_input}"
+
+    def it_returns_output_and_summary_for_paused_sessions(self):
+        """T032b: paused approval sessions must still expose reconciliation output and summary."""
+        _setup_real_app()
+        trigger = _req(
+            "post",
+            "/agents/trigger",
+            json={
+                "agent_name": "settlement-reconciliation-agent",
+                "params": {"settlement_date": "2026-04-20"},
+            },
+        )
+        session_id = trigger.json()["session_id"]
+
+        resp = _req("get", f"/sessions/{session_id}")
+        assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text}"
+        data = resp.json()
+        assert data["status"] == "paused", f"Expected paused status, got {data['status']}"
+        assert data["output"] is not None, f"Expected output for paused session, got {data}"
+        assert data["summary"] is not None, f"Expected summary for paused session, got {data}"
+        assert data["summary"]["discrepancy_count"] >= 1, f"Expected discrepancies in summary, got {data['summary']}"
+
+    def it_reports_dependency_health_when_all_services_are_available(self):
+        """/health returns healthy when all dependency probes succeed."""
+        import src.api.main as m
+
+        async def healthy():
+            return "healthy"
+
+        with patch.object(m, "_check_ollama_health", new=healthy), \
+                patch.object(m, "_check_postgres_health", new=healthy), \
+                patch.object(m, "_check_redis_health", new=healthy):
+            resp = _req("get", "/health")
+
+        assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text}"
+        data = resp.json()
+        assert data["status"] == "healthy", f"Expected healthy, got {data}"
+        assert data["services"]["postgres"] == "healthy", f"Expected postgres healthy, got {data}"
+        assert data["services"]["redis"] == "healthy", f"Expected redis healthy, got {data}"
+
+    def it_reports_degraded_health_when_one_dependency_is_unhealthy(self):
+        """/health returns degraded when exactly one dependency probe fails."""
+        import src.api.main as m
+
+        async def healthy():
+            return "healthy"
+
+        async def unhealthy():
+            return "unhealthy"
+
+        with patch.object(m, "_check_ollama_health", new=healthy), \
+                patch.object(m, "_check_postgres_health", new=healthy), \
+                patch.object(m, "_check_redis_health", new=unhealthy):
+            resp = _req("get", "/health")
+
+        assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text}"
+        data = resp.json()
+        assert data["status"] == "degraded", f"Expected degraded, got {data}"
+        assert data["services"]["redis"] == "unhealthy", f"Expected redis unhealthy, got {data}"

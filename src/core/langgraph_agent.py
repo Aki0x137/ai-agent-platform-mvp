@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional
 from langgraph.graph import END, StateGraph
 
 from src.audit.audit_logger import AuditLogger
+from src.connectors import ConnectorRegistry
 from src.core.reconciliation_service import ReconciliationService
 from src.sessions.session_manager import SessionManager
 
@@ -72,10 +73,12 @@ class ReconciliationAgent:
         session_manager: SessionManager,
         audit_logger: AuditLogger,
         threshold: float = 500.0,
+        mcp_connector_config: Optional[Dict[str, Any]] = None,
     ) -> None:
         self.sm = session_manager
         self.al = audit_logger
         self.threshold = threshold
+        self.mcp_connector_config = mcp_connector_config or {"stub_dir": "docker/mcp_stub"}
         self._graph = self._build_graph()
 
     # ── Graph construction ───────────────────────────────────────────────
@@ -181,7 +184,16 @@ class ReconciliationAgent:
         def _route_after_gate(state: AgentState) -> str:
             return "await_approval" if state.get("needs_approval") else "finalize"
 
+        def _persist_result(session_id: str, result: Dict[str, Any]) -> None:
+            summary: Dict[str, Any] = {
+                "matched_count": result.get("matched_count", 0),
+                "discrepancy_count": result.get("discrepancy_count", 0),
+                "total_variance_usd": result.get("total_variance_usd", 0.0),
+            }
+            sm.set_output(session_id, output=result, summary=summary)
+
         def _await_approval(state: AgentState) -> AgentState:
+            _persist_result(state["session_id"], state.get("reconciliation_result", {}))
             sm.update_status(state["session_id"], "paused")
             al.log(state["session_id"], "checkpoint", {
                 "step": "await_approval",
@@ -191,12 +203,7 @@ class ReconciliationAgent:
 
         def _finalize(state: AgentState) -> AgentState:
             result = state.get("reconciliation_result", {})
-            summary: Dict[str, Any] = {
-                "matched_count": result.get("matched_count", 0),
-                "discrepancy_count": result.get("discrepancy_count", 0),
-                "total_variance_usd": result.get("total_variance_usd", 0.0),
-            }
-            sm.set_output(state["session_id"], output=result, summary=summary)
+            _persist_result(state["session_id"], result)
             sm.update_status(state["session_id"], "completed")
             al.log(state["session_id"], "checkpoint", {
                 "step": "finalize",
@@ -259,3 +266,84 @@ class ReconciliationAgent:
             self.sm.update_status(session_id, "failed", str(exc))
             self.al.log(session_id, "error", {"step": "agent_run", "error": str(exc)})
             return {"status": "failed", "error": str(exc)}
+
+    def resume_after_approval(
+        self,
+        session_id: str,
+        approved_by: Optional[str] = None,
+        comment: Optional[str] = None,
+        ticket_reference: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Resume a paused session after a human approval decision."""
+        session = self.sm.get_session(session_id)
+        if session is None:
+            raise ValueError(f"Session {session_id!r} not found")
+        if session.get("status") != "paused":
+            raise RuntimeError(f"Session {session_id!r} is not paused")
+        if not session.get("output_result"):
+            raise RuntimeError(f"Session {session_id!r} has no reconciliation output to finalize")
+
+        self.sm.update_status(session_id, "running")
+        output_result = dict(session.get("output_result") or {})
+        if ticket_reference is not None:
+            output_result["ticket_reference"] = ticket_reference
+            self.sm.set_output(session_id, output=output_result, summary=session.get("summary"))
+        self.al.log(session_id, "checkpoint", {
+            "step": "resume_after_approval",
+            "status": "running",
+            "approved_by": approved_by,
+            "comment": comment,
+            "ticket_reference": ticket_reference,
+        })
+        self.sm.update_status(session_id, "completed")
+        self.al.log(session_id, "checkpoint", {
+            "step": "finalize_after_approval",
+            "status": "completed",
+        })
+        return self.sm.get_session(session_id) or {"status": "completed"}
+
+    def mark_ticket_creation_failed(
+        self,
+        session_id: str,
+        error: str,
+        approved_by: Optional[str] = None,
+        comment: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Mark a resumed session as failed after ticket creation error."""
+        session = self.sm.get_session(session_id)
+        if session is None:
+            raise ValueError(f"Session {session_id!r} not found")
+
+        output_result = dict(session.get("output_result") or {})
+        output_result["ticket_error"] = error
+        self.sm.set_output(session_id, output=output_result, summary=session.get("summary"))
+        self.sm.update_status(session_id, "failed", error)
+        self.al.log(session_id, "error", {
+            "step": "ticket_creation",
+            "error": error,
+            "approved_by": approved_by,
+            "comment": comment,
+        })
+        return self.sm.get_session(session_id) or {"status": "failed", "error": error}
+
+    async def create_ticket_after_approval(self, session_id: str) -> Dict[str, Any]:
+        """Create an investigation ticket for a paused session via the MCP connector."""
+        session = self.sm.get_session(session_id)
+        if session is None:
+            raise ValueError(f"Session {session_id!r} not found")
+        output = session.get("output_result") or {}
+        connector = ConnectorRegistry.create(
+            "mcp",
+            name="mcp_ticketing",
+            config=self.mcp_connector_config,
+        )
+        result = await connector.query({
+            "action": "create_ticket",
+            "session_id": session_id,
+            "summary": f"Settlement discrepancy investigation for {session_id}",
+            "evidence": output,
+            "simulate_failure": self.mcp_connector_config.get("simulate_failure", False),
+        })
+        if not result.success:
+            raise RuntimeError(result.error or "MCP ticket creation failed")
+        return result.data[0]

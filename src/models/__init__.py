@@ -281,6 +281,13 @@ class ApprovalRequest(BaseModel):
     expires_at: Optional[datetime] = None
 
 
+class ApproveSessionRequest(BaseModel):
+    """Request body for the approval endpoint."""
+    approved_by: Optional[str] = None
+    comment: Optional[str] = None
+    status: ApprovalStatus = ApprovalStatus.APPROVED
+
+
 class ApproveSessionResponse(BaseModel):
     """Response returned after a human approves or rejects a session."""
     session_id: UUID
