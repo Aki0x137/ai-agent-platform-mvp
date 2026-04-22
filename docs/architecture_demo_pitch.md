@@ -20,7 +20,7 @@ We built this using a modern, asynchronous Python 3.11+ stack:
 
 1. **Initialization:** A `POST /agents/trigger` hits FastAPI. LangGraph initializes an `AgentState` matrix and fetches mock ledger rows from PostgreSQL and mock Exchange APIs.
 2. **Algorithmic & AI Hybrid Reconciliation:** The system bypasses the LLM for deterministic math (FX rates and matrix diffing). The LLM is strictly reserved for fuzzy-matching unstructured discrepancies, minimizing token waste. 
-3. **The Interrupt (Thread Suspension):** The computed variance exceeds our $500 hard-coded threshold. LangGraph emits a `human_gate` audit event, serializes its entire execution stack, dumps it to SQLite, and halts the active thread.
+3. **The Interrupt (Thread Suspension):** The computed variance exceeds our ₹500 hard-coded threshold. LangGraph emits a `human_gate` audit event, serializes its entire execution stack, dumps it to SQLite, and halts the active thread.
 4. **Human-in-the-Loop Resumption:** An analyst reviews the cryptographic trace via `GET /sessions/{id}`. Upon `POST /approve`, FastAPI rehydrates the LangGraph thread from SQLite memory. The agent wakes up, recognizes the approval, and fires an MCP intent to create an actionable ticket.
 
 ## 📊 Architecture Diagram
@@ -28,7 +28,7 @@ We built this using a modern, asynchronous Python 3.11+ stack:
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Treasury Analyst
+    actor User as Product Manager
     participant API as FastAPI (Uvicorn/Async)
     participant Graph as LangGraph (StateGraph)
     participant Router as Zero-Trust Model Router
@@ -48,7 +48,7 @@ sequenceDiagram
     end
     
     %% Gate & Suspension
-    Graph->>Graph: Calculate Variance = $1098.75 (> $500 Threshold)
+    Graph->>Graph: Calculate Variance = ₹1098.75 (> ₹500 Threshold)
     Graph->>Mem: Serialize & Freeze Thread State
     Graph-->>-API: Thread Suspended (needs_approval)
     API-->>-User: Return session_id & hitl_status

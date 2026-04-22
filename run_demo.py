@@ -13,7 +13,7 @@ API_URL = "http://localhost:8000"
 def get_status():
     try:
         r = requests.get(f"{API_URL}/health")
-        return r.json().get("status", "down") == "ok"
+        return r.json().get("status", "down") == "healthy"
     except Exception:
         return False
 
@@ -60,7 +60,7 @@ try:
     output = trace_data.get("output", {})
     console.print(f"   Matched Records: {output.get('matched_count', 0)}")
     console.print(f"   Discrepancies:   [bold red]{output.get('discrepancy_count', 0)}[/bold red]")
-    console.print(f"   Total Variance:  [bold red]${output.get('total_variance_usd', 0.0):.2f}[/bold red]")
+    console.print(f"   Total Variance:  [bold red]₹{output.get('total_variance_inr', 0.0):.2f}[/bold red]")
 
     console.print("\n[bold cyan]>> ReAct Routing & Tool Calls:[/bold cyan]")
     for tc in trace_data.get("tool_calls", []):
@@ -79,7 +79,7 @@ try:
         task = progress.add_task("[cyan]Calling POST /sessions/.../approve...", total=None)
         appr_resp = requests.post(
             f"{API_URL}/sessions/{session_id}/approve",
-            json={"approved_by": "treasury@demo.local", "comment": "Variance confirmed, proceed with Jira creation.", "status": "completed"}
+            json={"approved_by": "prodmanager@demo.local", "comment": "Variance confirmed, proceed with Jira creation.", "status": "approved"}
         )
         appr_resp.raise_for_status()
         appr_data = appr_resp.json()

@@ -128,13 +128,12 @@ CREATE TABLE IF NOT EXISTS demo_fx_rates (
 );
 
 -- ── Seed: demo agent ─────────────────────────────────────────────────────────
-INSERT INTO agents (name, description, model_policy, system_prompt, tools, max_session_hours, created_by)
+INSERT INTO agents (name, description, model_policy, system_prompt, max_session_hours, created_by)
 VALUES (
     'settlement-reconciliation-agent',
     'End-of-day settlement reconciliation agent for FinAgent MVP demo.',
     'hybrid',
     'You are a settlement reconciliation agent. You compare internal payout records against exchange settlement data, identify discrepancies, collect log evidence, and prepare a structured report for human review.',
-    ARRAY['postgres.query', 'exchange.get_settlements', 'fx_rates.get', 'account_mapping.get', 'reconcile.run', 'logs.search'],
     1,
     'init.sql'
 )
@@ -151,8 +150,8 @@ INSERT INTO connectors (name, type, config) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- ── Seed: demo internal payouts ──────────────────────────────────────────────
-INSERT INTO demo_internal_payouts (payout_id, account_id, amount_usd, currency, settled_at, status) VALUES
-    ('PAYOUT-1001', 'ACC001', 1000.00,  'USD', '2026-04-20', 'settled'),
+INSERT INTO demo_internal_payouts (payout_id, account_id, amount_inr, currency, settled_at, status) VALUES
+    ('PAYOUT-1001', 'ACC001', 1000.00,  'INR', '2026-04-20', 'settled'),
     ('PAYOUT-1002', 'ACC002', 2150.25,  'EUR', '2026-04-20', 'pending_review'),
     ('PAYOUT-1003', 'ACC003',  780.00,  'GBP', '2026-04-20', 'settled')
 ON CONFLICT (payout_id) DO NOTHING;
@@ -160,18 +159,18 @@ ON CONFLICT (payout_id) DO NOTHING;
 -- ── Seed: demo exchange settlements ─────────────────────────────────────────
 -- PAYOUT-1001: exact match; PAYOUT-1002: amount mismatch (EUR slippage);
 -- PAYOUT-1003: absent (exchange has PAYOUT-1004 instead → two-way discrepancy)
-INSERT INTO demo_exchange_settlements (payout_id, account_id, amount_usd, currency, settled_at, status, exchange_timestamp) VALUES
-    ('PAYOUT-1001', 'ACC001', 1000.00,  'USD', '2026-04-20', 'settled', '2026-04-20T08:14:58Z'),
+INSERT INTO demo_exchange_settlements (payout_id, account_id, amount_inr, currency, settled_at, status, exchange_timestamp) VALUES
+    ('PAYOUT-1001', 'ACC001', 1000.00,  'INR', '2026-04-20', 'settled', '2026-04-20T08:14:58Z'),
     ('PAYOUT-1002', 'ACC002', 2098.75,  'EUR', '2026-04-20', 'settled', '2026-04-20T08:15:18Z'),
     ('PAYOUT-1004', 'ACC003',  120.00,  'GBP', '2026-04-20', 'settled', '2026-04-20T09:01:00Z')
 ON CONFLICT (payout_id) DO NOTHING;
 
 -- ── Seed: demo FX rates ──────────────────────────────────────────────────────
 INSERT INTO demo_fx_rates (from_currency, to_currency, rate, rate_date, source) VALUES
-    ('USD', 'USD', 1.00000000,   '2026-04-20', 'generator'),
-    ('EUR', 'USD', 1.08695652,   '2026-04-20', 'generator'),
-    ('GBP', 'USD', 1.26582278,   '2026-04-20', 'generator'),
-    ('INR', 'USD', 0.01198322,   '2026-04-20', 'generator')
+    ('INR', 'INR', 1.00000000,   '2026-04-20', 'generator'),
+    ('EUR', 'INR', 90.60000000,   '2026-04-20', 'generator'),
+    ('GBP', 'INR', 105.63000000,   '2026-04-20', 'generator'),
+    ('USD', 'INR', 83.45000000,   '2026-04-20', 'generator')
 ON CONFLICT (from_currency, to_currency, rate_date) DO NOTHING;
 
 -- Grant permissions

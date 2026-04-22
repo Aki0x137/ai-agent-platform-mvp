@@ -4,8 +4,8 @@
     {
       "account_id": "ACC001",
       "exchange_account_id": "EX-001",
-      "entity": "Alpha Treasury",
-      "base_currency": "USD"
+      "entity": "Alpha Product Ops",
+      "base_currency": "INR"
     },
     {
       "account_id": "ACC002",

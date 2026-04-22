@@ -32,7 +32,7 @@ An agent investigates a payout discrepancy reported between the exchange and our
 | 1 | PostgreSQL | Read internal payout ledger for settlement date |
 | 2 | REST API | Fetch exchange's settlement statement from mock HTTP server |
 | 3 | InMemory | Look up FX rates and account-to-exchange ID mapping |
-| 4 | Sandbox | Run Python diff script — compute net exposure, flag rows > $500 |
+| 4 | Sandbox | Run Python diff script — compute net exposure, flag rows > ₹500 |
 | 5 | Logs | Pull payment-gateway container logs — find timeout/retry root cause |
 | 6 | MCP | Invoke Jira MCP tool — auto-create investigation ticket with findings |
 | GATE | Human | Approve before ticket is filed (mock sync approval for MVP) |
@@ -92,7 +92,7 @@ Confirmed for the first pass:
 Create all fixture data the demo scenario needs before any connector is built.
 
 **PostgreSQL seed (add to `docker/init.sql`):**
-- `demo_internal_payouts` — our ledger rows: payout_id, account_id, amount_usd, currency, settled_at, status
+- `demo_internal_payouts` — our ledger rows: payout_id, account_id, amount_inr, currency, settled_at, status
 - `demo_exchange_settlements` — exchange rows with intentional discrepancies (missing rows, FX rounding gaps, one failed entry)
 - `demo_fx_rates` — currency pair rates for the settlement date
 
@@ -102,7 +102,7 @@ Create all fixture data the demo scenario needs before any connector is built.
 - Implemented with a static JSON server (e.g. `json-server` or a tiny FastAPI fixture app)
 
 **InMemory fixtures:**
-- FX rates for USD/EUR/GBP/INR loaded at startup from `config/fx_rates.json`
+- FX rates for INR/EUR/GBP/USD loaded at startup from `config/fx_rates.json`
 - Account-to-exchange-ID mapping loaded from `config/account_mapping.json`
 
 **Mock log file:**
@@ -346,7 +346,7 @@ Example MVP agent config:
 name: demo-reconciliation
 model_policy: hybrid
 system_prompt: |
-  Compare ledger entries. Flag discrepancies > $100.
+  Compare ledger entries. Flag discrepancies > ₹100.
 tools:
   - postgres.read_ledger
   - rest_api.compare_dw

@@ -19,6 +19,8 @@ RUN pip install --no-cache-dir uv
 COPY pyproject.toml uv.lock* ./
 
 # Install Python dependencies using uv
+# Using uv sync with explicit project creation
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN uv sync --no-dev

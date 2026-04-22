@@ -35,22 +35,22 @@ from src.sessions.session_manager import SessionManager
 # ── Demo fixture data (mirrors docker/init.sql seed rows) ──────────────────
 
 DEMO_INTERNAL: List[Dict[str, Any]] = [
-    {"payout_id": "PAYOUT-1001", "account_id": "ACC001", "amount_usd": 1000.00, "currency": "USD", "status": "settled"},
-    {"payout_id": "PAYOUT-1002", "account_id": "ACC002", "amount_usd": 2150.25, "currency": "EUR", "status": "pending_review"},
-    {"payout_id": "PAYOUT-1003", "account_id": "ACC003", "amount_usd": 780.00,  "currency": "GBP", "status": "settled"},
+    {"payout_id": "PAYOUT-1001", "account_id": "ACC001", "amount_inr": 1000.00, "currency": "INR", "status": "settled"},
+    {"payout_id": "PAYOUT-1002", "account_id": "ACC002", "amount_inr": 2150.25, "currency": "EUR", "status": "pending_review"},
+    {"payout_id": "PAYOUT-1003", "account_id": "ACC003", "amount_inr": 780.00,  "currency": "GBP", "status": "settled"},
 ]
 
 DEMO_EXCHANGE: List[Dict[str, Any]] = [
-    {"payout_id": "PAYOUT-1001", "account_id": "ACC001", "amount_usd": 1000.00, "currency": "USD", "status": "settled"},
-    {"payout_id": "PAYOUT-1002", "account_id": "ACC002", "amount_usd": 2098.75, "currency": "EUR", "status": "settled"},
-    {"payout_id": "PAYOUT-1004", "account_id": "ACC003", "amount_usd": 120.00,  "currency": "GBP", "status": "settled"},
+    {"payout_id": "PAYOUT-1001", "account_id": "ACC001", "amount_inr": 1000.00, "currency": "INR", "status": "settled"},
+    {"payout_id": "PAYOUT-1002", "account_id": "ACC002", "amount_inr": 2098.75, "currency": "EUR", "status": "settled"},
+    {"payout_id": "PAYOUT-1004", "account_id": "ACC003", "amount_inr": 120.00,  "currency": "GBP", "status": "settled"},
 ]
 
 DEMO_FX_RATES: Dict[str, float] = {
-    "USD": 1.0,
-    "EUR": 1.08695652,
-    "GBP": 1.26582278,
-    "INR": 0.01198322,
+    "INR": 1.0,
+    "EUR": 90.60,
+    "GBP": 105.63,
+    "USD": 83.45,
 }
 
 # ── Type alias for graph state ──────────────────────────────────────────────
@@ -70,7 +70,7 @@ class ReconciliationAgent:
     audit_logger:
         ``AuditLogger`` instance used to write immutable audit events.
     threshold:
-        USD variance above which a discrepancy is rated *critical* and
+        INR variance above which a discrepancy is rated *critical* and
         triggers the human approval gate.
     """
 
@@ -137,7 +137,7 @@ class ReconciliationAgent:
             console.print(f"[bold green]▶ [reconcile][/bold green] Finding discrepancies...")
             console.print(f"[bold green]▶ [reconcile][/bold green] Finding discrepancies...")
 
-            svc = ReconciliationService(discrepancy_threshold_usd=threshold)
+            svc = ReconciliationService(discrepancy_threshold_inr=threshold)
             result = svc.reconcile(
                 internal=state["internal_records"],
                 exchange=state["exchange_records"],
@@ -148,7 +148,7 @@ class ReconciliationAgent:
             result_dict: Dict[str, Any] = {
                 "matched_count": result.matched_count,
                 "discrepancy_count": result.discrepancy_count,
-                "total_variance_usd": result.total_variance_usd,
+                "total_variance_inr": result.total_variance_usd,
                 "matched": result.matched,
                 "discrepancies": result.discrepancies,
             }
@@ -163,14 +163,14 @@ class ReconciliationAgent:
                 "output": {
                     "matched": result.matched_count,
                     "discrepancies": result.discrepancy_count,
-                    "total_variance_usd": result.total_variance_usd,
+                    "total_variance_inr": result.total_variance_usd,
                 },
             }
             al.log(session_id, "checkpoint", {
                 "step": "reconcile",
                 "matched_count": result.matched_count,
                 "discrepancy_count": result.discrepancy_count,
-                "total_variance_usd": result.total_variance_usd,
+                "total_variance_inr": result.total_variance_usd,
                 "duration_ms": duration_ms,
             })
             sm.add_tool_call(session_id, tc)
@@ -179,8 +179,8 @@ class ReconciliationAgent:
 
         def _check_gate(state: AgentState) -> AgentState:
             result = state.get("reconciliation_result", {})
-            console.print(f"[bold green]▶ [check_gate][/bold green] Validating discrepancies against $[red]{threshold}[/red] threshold...")
-            console.print(f"[bold green]▶ [check_gate][/bold green] Validating discrepancies against $[red]{threshold}[/red] threshold...")
+            console.print(f"[bold green]▶ [check_gate][/bold green] Validating discrepancies against ₹[red]{threshold}[/red] threshold...")
+            console.print(f"[bold green]▶ [check_gate][/bold green] Validating discrepancies against ₹[red]{threshold}[/red] threshold...")
             discrepancies = result.get("discrepancies", [])
             critical = [d for d in discrepancies if d.get("severity") == "critical"]
             needs_approval = len(critical) > 0
@@ -204,7 +204,7 @@ class ReconciliationAgent:
             summary: Dict[str, Any] = {
                 "matched_count": result.get("matched_count", 0),
                 "discrepancy_count": result.get("discrepancy_count", 0),
-                "total_variance_usd": result.get("total_variance_usd", 0.0),
+                "total_variance_inr": result.get("total_variance_usd", 0.0),
             }
             sm.set_output(session_id, output=result, summary=summary)
 

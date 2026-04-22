@@ -23,7 +23,7 @@ system_prompt: |
   Output a structured JSON report with:
     - settlement_date
     - matched: list of matched payout IDs
-    - discrepancies: list of objects with payout_id, type, variance_usd, severity, log_evidence
+    - discrepancies: list of objects with payout_id, type, variance_inr, severity, log_evidence
     - summary: a brief plain-English explanation of the findings
     - threshold_breached: true if any discrepancy exceeds the configured threshold
 
@@ -42,6 +42,6 @@ human_gates:
     description: "Pause and require human approval before creating an investigation ticket."
 
 max_session_hours: 1
-discrepancy_threshold_usd: 500.0
+discrepancy_threshold_inr: 500.0
 settlement_date: "2026-04-20"
 

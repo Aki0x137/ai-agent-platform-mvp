@@ -95,7 +95,7 @@ curl http://localhost:8000/sessions/<session_id>
 
 ### 7. Approve the Paused Session
 
-The run will halt at a human approval gate if discrepancies are above \$500:
+The run will halt at a human approval gate if discrepancies are above ₹500:
 ```bash
 curl -X POST http://localhost:8000/sessions/<session_id>/approve \
   -H 'Content-Type: application/json' \
