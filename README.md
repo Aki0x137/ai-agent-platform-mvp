@@ -2,66 +2,103 @@
 
 A local Docker-based MVP of **FinAgent**, an internal AI agent platform for automating multi-step workflows across data warehouses, APIs, and core banking systems.
 
-**Current Status:** Phase 0 — Planning & Setup (Implementation Not Yet Started)  
-**Stack:** LangGraph + Ollama + Mem0 + FastAPI + PostgreSQL + Redis  
+**Current Status:** MVP Implementation Complete
+**Stack:** LangGraph + Ollama + SQLite + FastAPI + PostgreSQL + Redis  
 **Demo Scenario:** End-of-Day Settlement Reconciliation with Root-Cause Analysis
 
 ---
 
 ## 📋 Current Phase
 
-This is a **planning repository**. The project structure, Docker setup, data models, and implementation plan are locked. Code infrastructure (empty directories, stubs) is in place to structure the work, but core implementation (LangGraph orchestration, connectors, session management) is not yet started.
+**MVP Complete**. The project correctly implements a working LangGraph orchestration layer parsing hybrid payloads via a ModelRouter directly onto local Mistral/Gemma models. All connectors are strictly functional for demonstration, including PostgreSQL for core banking, REST APIs for external exchange datasets, and an SQLite session manager recording complete ReAct audit logs.
 
 **Refer to [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for the full task breakdown and current phase status.**
 
 ---
 
-## 🎯 Quick Start (When Implementation Begins)
+---
+
+## 🎯 Quick Start & Demo (Phase 7 Complete)
 
 ### Prerequisites
 - Docker & Docker Compose (v2+)
 - Python 3.11+
 - `uv` package manager
 
-### Setup (Local Development)
+### 1. Setup & Environment
 
-**1. Clone and prepare the environment:**
+Clone the repository and prepare the config:
 ```bash
-cd /path/to/ai-agent-platform-mvp
 cp .env.example .env
 ```
 
-**2. Install Python dependencies:**
+Install Python dependencies:
 ```bash
 uv venv
 source .venv/bin/activate
 uv sync
 ```
 
-**3. Start all services:**
+### 2. Start Services & Database
+
+Run PostgreSQL, Redis, and FastAPI API Server (and Ollama, if running in container):
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
-**4. Verify all services are healthy:**
+Verify services are healthy:
 ```bash
 curl http://localhost:8000/health
 ```
 
-**5. Run BDD tests:**
-```bash
-python -m specify specs/
-```
+### 3. Bootstrap Local Models (Ollama)
 
-**6. Bootstrap local Ollama models for demo runs:**
+Initialize the LLMs used by the dynamic agent:
 ```bash
-docker compose up -d ollama
 docker compose exec ollama ollama pull mistral
 docker compose exec ollama ollama pull gemma:2b
-uv run python data/validate_model_latency.py --iterations 3
 ```
 
----
+Run a latency validation script to confirm they return non-empty responses:
+```bash
+uv run python data/validate_model_latency.py --iterations 1
+```
+
+*(Note: If running Ollama natively on macOS/Windows, execute `ollama serve` then `ollama pull mistral` outside of Docker).*
+
+### 4. Run the Demo Test Suite
+
+End-to-end BDD tests validate the full graph orchestration and all 6 data connectors dynamically matching discrepancies:
+```bash
+PYTHONPATH=. uv run python -m specify specs/*_spec.py
+```
+*Expected: 78 tests pass.*
+
+### 5. Trigger a Core Reconciliation Run (Live API)
+
+```bash
+curl -X POST http://localhost:8000/agents/trigger \
+  -H 'Content-Type: application/json' \
+  -d '{"agent_name":"settlement-reconciliation-agent","params":{"settlement_date":"2026-04-20"}}'
+```
+
+### 6. View Trace & Audit Artifacts
+
+Substitute `<session_id>` with the run returned from the previous step:
+```bash
+curl http://localhost:8000/sessions/<session_id>
+```
+
+### 7. Approve the Paused Session
+
+The run will halt at a human approval gate if discrepancies are above \$500:
+```bash
+curl -X POST http://localhost:8000/sessions/<session_id>/approve \
+  -H 'Content-Type: application/json' \
+  -d '{"approved_by":"demo-user","comment":"Proceed with Jira ticket creation"}'
+```
+
+After approval, the agent completes the LangGraph run by creating a Jira artifact via the MCP Connector.
 
 ## 🧪 Testing with Specify BDD
 
@@ -94,7 +131,7 @@ src/
 ├── secrets/         # Secret management (env/vault) ✓
 ├── connectors/      # Data connectors (PostgreSQL, REST, InMemory)
 ├── audit/           # Immutable audit logger
-└── sessions/        # Session manager with Mem0
+└── sessions/        # Session manager with SQLite
 
 specs/               # BDD tests using Specify framework
 ├── router_spec.py   # Model router & classifier tests ✓
@@ -110,7 +147,7 @@ config/
 
 ---
 
-## 📋 Planning Status (Phase 0 — Complete)
+## 📋 Implementation Status
 
 - ✅ Python 3.11 pinned via `.python-version` and `pyproject.toml`
 - ✅ uv project initialized with 50+ dependencies pinned

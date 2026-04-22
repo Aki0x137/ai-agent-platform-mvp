@@ -3,7 +3,7 @@
 **Feature Branch**: `[001-settlement-reconciliation-mvp]`  
 **Created**: 2026-04-21  
 **Status**: Draft  
-**Input**: User description: "Build a local Docker-based MVP demo for FinAgent that performs end-of-day settlement reconciliation with PostgreSQL, REST, InMemory, Sandbox, Logs, and MCP connectors, using LangGraph orchestration, Mem0 session memory, FastAPI APIs, immutable audit logs, and Specify BDD specs."
+**Input**: User description: "Build a local Docker-based MVP demo for FinAgent that performs end-of-day settlement reconciliation with PostgreSQL, REST, InMemory, Sandbox, Logs, and MCP connectors, using LangGraph orchestration, SQLite session memory, FastAPI APIs, immutable audit logs, and Specify BDD specs."
 
 ## User Scenarios & Testing *(mandatory)*
 

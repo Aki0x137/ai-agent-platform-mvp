@@ -21,7 +21,7 @@ class RestApiConnector(Connector):
         """Perform HTTP GET. Separated for easy mocking."""
         import httpx
 
-        timeout = self.config.get("timeout_seconds", 30)
+        timeout = self.config.get("timeout_seconds", 1)
         async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.get(url, params=params)
             resp.raise_for_status()

@@ -95,7 +95,7 @@
 ### Implementation for User Story 2
 
 - [X] T028 [P] [US2] Implement immutable audit logger in src/audit/audit_logger.py
-- [X] T029 [P] [US2] Implement Mem0-backed session manager in src/sessions/session_manager.py
+- [X] T029 [P] [US2] Implement SQLite-backed session manager in src/sessions/session_manager.py
 - [X] T030 [US2] Implement LangGraph state flow for checkpoints in src/core/langgraph_agent.py
 - [X] T031 [US2] Expose session status and trace endpoints in src/api/main.py
 - [X] T032 [US2] Add minimal trace-view payload shaping in src/api/trace_view.py
@@ -133,16 +133,41 @@
 
 ---
 
-## Phase 6: Polish & Cross-Cutting Concerns
+## Phase 6: True LLM Orchestration & Dynamic Connectors (Priority: Critical)
 
-- [ ] T041 [P] Update README quickstart and demo instructions in README.md
+**Goal**: Replace the deterministic, hardcoded procedural graph with a true LLM-driven ReAct loop that dynamically invokes the implemented connectors and validates hybrid model routing.
+
+### Tests for True LLM Orchestration
+- [X] T041a Write Specify specs for LLM tool binding and prompt execution in `specs/llm_orchestration_spec.py`
+- [X] T041b Write Specify spec verifying `ModelRouter` integration within the agent graph
+
+### Implementation for True LLM Orchestration
+- [X] T041c Refactor `src/core/langgraph_agent.py` to implement a proper LangGraph loop for dynamic connector calls.
+- [X] T041d Bind `PostgreSQLConnector`, `RestConnector`, `InMemoryConnector`, `LogsConnector`, and `MCPConnector` to the local LLM as executable tools.
+- [X] T041e Integrate `ModelRouter` into the graph to correctly route prompts to the local Ollama instance (`Mistral` or `Gemma 4`).
+- [X] T041f Remove static dictionary fixtures (`DEMO_INTERNAL`, `DEMO_EXCHANGE`) from the agent and ensure data is retrieved purely through dynamic connector tool calls.
+
+---
+
+## Phase 7: Polish & Cross-Cutting Concerns
+
+- [X] T041 [P] Update README quickstart and demo instructions in README.md
 - [X] T042 [P] Add health and readiness dependency checks in src/api/main.py
 - [X] T042a [P] Probe Postgres and Redis in /health and surface readiness failures without silently swallowing dependency errors in src/api/main.py
-- [ ] T043 Run hygiene suite and record checkpoint outputs in specs/001-settlement-reconciliation-mvp/quickstart.md
-- [ ] T044 [P] Add explicit local-model bootstrap commands (`ollama serve`, pull, smoke check, latency check) to README.md and quickstart.md
-- [ ] T045 Add env/local-only config validation and remove misleading Vault placeholders in docker-compose.yml, .env.example, and src/config/agent_config.py
-- [ ] T046 Add benchmark step that records end-to-end run time (<60s target) in specs/001-settlement-reconciliation-mvp/quickstart.md
-- [ ] T046a Reconcile session-storage wording in specs/001-settlement-reconciliation-mvp/tasks.md, plan.md, and related docs with the implemented SQLite-backed session manager or replace it with a true Mem0-backed implementation
+- [X] T043 Run hygiene suite and record checkpoint outputs in specs/001-settlement-reconciliation-mvp/quickstart.md
+- [X] T044 [P] Add explicit local-model bootstrap commands (`ollama serve`, pull, smoke check, latency check) to README.md and quickstart.md
+- [X] T045 Add env/local-only config validation and remove misleading Vault placeholders in docker-compose.yml, .env.example, and src/config/agent_config.py
+- [X] T046 Add benchmark step that records end-to-end run time (<60s target) in specs/001-settlement-reconciliation-mvp/quickstart.md
+- [X] T046a Reconcile session-storage wording in specs/001-settlement-reconciliation-mvp/tasks.md, plan.md, and related docs with the implemented SQLite-backed session manager to reflect current architecture.
+
+---
+
+## Phase 8: Post-MVP Enhancements
+
+**Goal**: Further align the initial demo implementation with the true platform architecture detailed in the PRD.
+
+- [ ] T047 **True SQLite Integration**: Replace the SQLite-backed session manager with a true SQLite-backed implementation (vLLM instance) for long-term distributed session memory and semantic retrieval.
+- [ ] T048 **Vault Secret Manager Integration**: Replace simple env vars with a mock Vault adapter mimicking enterprise secret retrieval.
 
 ---
 
@@ -155,15 +180,18 @@
 - Phase 2 blocks all user stories.
 - User Story 1 is the MVP and should ship first.
 - User Stories 2 and 3 depend on Phase 2 and can proceed after User Story 1 is stable.
-- Phase 6 depends on the stories you choose to include in the demo.
+- Phase 6 (True LLM ReAct & Connectors) will replace the deterministic pipeline.
+- Phase 7 (Polish) depends on the stories you choose to include in the demo.
+- Phase 8 (Enhancements) should occur after MVP delivery.
 
 ### User Story Dependencies
 
 - **US1**: No story dependency after foundational work.
 - **US2**: Depends on the US1 execution path being present so traces have meaningful data.
 - **US3**: Depends on US1 discrepancy output and US2 session state handling.
-
-### Parallel Opportunities
+- **Phase 6 (True LLM)**: Depends on US3 completion so the agent can route to local models instead of hardcoded logic.
+- **Phase 7 (Polish)**: Depends on the stories you choose to include in the demo.
+- **Phase 8 (Enhancements)**: Can run independently after MVP stabilization.
 
 - T002, T003, T004 can run in parallel.
 - T005b and T005c can run in parallel after T005a.

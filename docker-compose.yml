@@ -110,8 +110,6 @@ services:
       AUDIT_DB_PATH: /data/audit.db
       
       # Secrets (mock for MVP)
-      VAULT_ADDR: http://vault:8200  # placeholder, not running yet
-      VAULT_TOKEN: dev_token_xyz
     volumes:
       - ./src:/app/src
       - ./config:/app/config
