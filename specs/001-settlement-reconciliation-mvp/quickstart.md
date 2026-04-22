@@ -41,13 +41,12 @@ python -m specify specs/
 
 ## Validate User Story 1
 
+Alternatively, you can run the automated interactive Python script:
 ```bash
-\nAlternatively, you can run the automated interactive shell script:
-```bash
-./demo.sh
+python run_demo.py
 ```
 
-curl -X POST http://localhost:8000/agents/trigger \
+```bash
   -H 'Content-Type: application/json' \
   -d '{"agent_name":"settlement-reconciliation-agent","params":{"settlement_date":"2026-04-20"}}'
 ```
