@@ -44,7 +44,7 @@ python -m specify specs/
 ```bash
 curl -X POST http://localhost:8000/agents/trigger \
   -H 'Content-Type: application/json' \
-  -d '{"agent_id":"settlement-reconciliation-agent","params":{"settlement_date":"2026-04-20"}}'
+  -d '{"agent_name":"settlement-reconciliation-agent","params":{"settlement_date":"2026-04-20"}}'
 ```
 
 Expected result: a session is created and later returns a discrepancy summary with log evidence.
@@ -66,3 +66,12 @@ curl -X POST http://localhost:8000/sessions/<session_id>/approve \
 ```
 
 Expected result: the session resumes and writes an MCP ticket artifact.
+## Hygiene and Benchmark Checkpoint (Phase 7)
+
+```bash
+time PYTHONPATH=. uv run python -m specify specs/*_spec.py
+```
+
+Expected result: All tests (78 tests) PASS.
+Target execution time: < 60.0s
+Actual execution time: ~1.0s (utilizing local memory mocks and lightweight fixtures)

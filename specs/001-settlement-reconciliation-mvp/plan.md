@@ -10,7 +10,7 @@ Build a local Docker-based MVP demo that runs an end-of-day settlement reconcili
 ## Technical Context
 
 **Language/Version**: Python 3.11  
-**Primary Dependencies**: FastAPI, LangGraph, Mem0, Ollama, SQLAlchemy, Redis, Specify BDD  
+**Primary Dependencies**: FastAPI, LangGraph, SQLite, Ollama, SQLAlchemy, Redis, Specify BDD  
 **Storage**: PostgreSQL for demo data and registry, SQLite for immutable audit logs, Redis for session/cache state  
 **Testing**: Specify BDD via `python -m specify specs/`  
 **Target Platform**: Local Linux Docker environment  

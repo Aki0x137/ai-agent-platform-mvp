@@ -24,7 +24,7 @@ class PostgreSQLConnector(Connector):
         user = self.config.get("user", "")
         password = self.config.get("password", "")
 
-        conn = await asyncpg.connect(
+        conn = await asyncpg.connect(timeout=1.0, 
             host=host,
             port=port,
             database=database,
