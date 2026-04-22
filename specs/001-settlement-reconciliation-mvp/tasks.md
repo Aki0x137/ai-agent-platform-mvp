@@ -37,12 +37,12 @@
 
 **Purpose**: Establish shared infrastructure that blocks every user story.
 
-- [ ] T006 Update Docker services and env wiring in docker-compose.yml
-- [ ] T007 [P] Add base connector interface in src/connectors/base.py
-- [ ] T008 [P] Add connector registry and shared result models in src/connectors/__init__.py
-- [ ] T009 Upgrade agent-config loading and validation in src/config/agent_config.py
-- [ ] T010 Upgrade model router for dual local-model configuration in src/router/__init__.py
-- [ ] T011 Add approval and ticket response models in src/models/__init__.py
+- [X] T006 Update Docker services and env wiring in docker-compose.yml
+- [X] T007 [P] Add base connector interface in src/connectors/base.py
+- [X] T008 [P] Add connector registry and shared result models in src/connectors/__init__.py
+- [X] T009 Upgrade agent-config loading and validation in src/config/agent_config.py
+- [X] T010 Upgrade model router for dual local-model configuration in src/router/__init__.py
+- [X] T011 Add approval and ticket response models in src/models/__init__.py
 
 **Checkpoint**: Foundational services and shared abstractions are ready for story implementation.
 
@@ -56,23 +56,24 @@
 
 ### Tests for User Story 1
 
-- [ ] T012 [P] [US1] Write PostgreSQL connector Specify specs in specs/postgres_connector_spec.py
-- [ ] T013 [P] [US1] Write REST connector Specify specs in specs/rest_connector_spec.py
-- [ ] T014 [P] [US1] Write InMemory connector Specify specs in specs/inmemory_connector_spec.py
-- [ ] T015 [P] [US1] Write Sandbox and Logs connector Specify specs in specs/reconciliation_tooling_spec.py
-- [ ] T016 [US1] Write reconciliation workflow Specify spec in specs/reconciliation_workflow_spec.py
-- [ ] T016a [US1] Add edge-case Specify scenarios (missing payouts, malformed FX rates, unavailable logs) in specs/reconciliation_workflow_spec.py
+- [X] T012 [P] [US1] Write PostgreSQL connector Specify specs in specs/postgres_connector_spec.py
+- [X] T013 [P] [US1] Write REST connector Specify specs in specs/rest_connector_spec.py
+- [X] T014 [P] [US1] Write InMemory connector Specify specs in specs/inmemory_connector_spec.py
+- [X] T015 [P] [US1] Write Sandbox and Logs connector Specify specs in specs/reconciliation_tooling_spec.py
+- [X] T015a [US1] Split Logs connector coverage into specs/logs_connector_spec.py so Specify discovers and runs the LogsConnectorSpec cases
+- [X] T016 [US1] Write reconciliation workflow Specify spec in specs/reconciliation_workflow_spec.py
+- [X] T016a [US1] Add edge-case Specify scenarios (missing payouts, malformed FX rates, unavailable logs) in specs/reconciliation_workflow_spec.py
 
 ### Implementation for User Story 1
 
-- [ ] T017 [P] [US1] Implement PostgreSQL connector in src/connectors/postgres_connector.py
-- [ ] T018 [P] [US1] Implement REST connector in src/connectors/rest_connector.py
-- [ ] T019 [P] [US1] Implement InMemory connector in src/connectors/inmemory_connector.py
-- [ ] T020 [P] [US1] Implement Sandbox connector in src/connectors/sandbox_connector.py
-- [ ] T021 [P] [US1] Implement Logs connector in src/connectors/logs_connector.py
-- [ ] T022 [US1] Implement reconciliation service in src/core/reconciliation_service.py
-- [ ] T023 [US1] Wire seeded data creation into docker/init.sql and data/generate_mock_data.py
-- [ ] T024 [US1] Update placeholder agent config for discrepancy investigation in config/reconciliation-agent.yaml
+- [X] T017 [P] [US1] Implement PostgreSQL connector in src/connectors/postgres_connector.py
+- [X] T018 [P] [US1] Implement REST connector in src/connectors/rest_connector.py
+- [X] T019 [P] [US1] Implement InMemory connector in src/connectors/inmemory_connector.py
+- [X] T020 [P] [US1] Implement Sandbox connector in src/connectors/sandbox_connector.py
+- [X] T021 [P] [US1] Implement Logs connector in src/connectors/logs_connector.py
+- [X] T022 [US1] Implement reconciliation service in src/core/reconciliation_service.py
+- [X] T023 [US1] Wire seeded data creation into docker/init.sql and data/generate_mock_data.py
+- [X] T024 [US1] Update placeholder agent config for discrepancy investigation in config/reconciliation-agent.yaml
 
 **Checkpoint**: User Story 1 is demoable without ticket creation.
 
@@ -86,19 +87,20 @@
 
 ### Tests for User Story 2
 
-- [ ] T025 [P] [US2] Write audit logger Specify specs in specs/audit_logger_spec.py
-- [ ] T026 [P] [US2] Write session manager Specify specs in specs/session_manager_spec.py
-- [ ] T027 [P] [US2] Write session trace API Specify specs in specs/session_api_spec.py
-- [ ] T027a [US2] Add trace-completeness and redaction Specify scenarios for 100% tool-call visibility in specs/session_api_spec.py
+- [X] T025 [P] [US2] Write audit logger Specify specs in specs/audit_logger_spec.py
+- [X] T026 [P] [US2] Write session manager Specify specs in specs/session_manager_spec.py
+- [X] T027 [P] [US2] Write session trace API Specify specs in specs/session_api_spec.py
+- [X] T027a [US2] Add trace-completeness and redaction Specify scenarios for 100% tool-call visibility in specs/session_api_spec.py
 
 ### Implementation for User Story 2
 
-- [ ] T028 [P] [US2] Implement immutable audit logger in src/audit/audit_logger.py
-- [ ] T029 [P] [US2] Implement Mem0-backed session manager in src/sessions/session_manager.py
-- [ ] T030 [US2] Implement LangGraph state flow for checkpoints in src/core/langgraph_agent.py
-- [ ] T031 [US2] Expose session status and trace endpoints in src/api/main.py
-- [ ] T032 [US2] Add minimal trace-view payload shaping in src/api/trace_view.py
-- [ ] T032a [US2] Enforce trace redaction and complete tool-call duration/routing capture in src/audit/audit_logger.py and src/api/trace_view.py
+- [X] T028 [P] [US2] Implement immutable audit logger in src/audit/audit_logger.py
+- [X] T029 [P] [US2] Implement Mem0-backed session manager in src/sessions/session_manager.py
+- [X] T030 [US2] Implement LangGraph state flow for checkpoints in src/core/langgraph_agent.py
+- [X] T031 [US2] Expose session status and trace endpoints in src/api/main.py
+- [X] T032 [US2] Add minimal trace-view payload shaping in src/api/trace_view.py
+- [X] T032a [US2] Enforce trace redaction and complete tool-call duration/routing capture in src/audit/audit_logger.py and src/api/trace_view.py
+- [X] T032b [US2] Persist reconciliation output and summary before entering the paused approval state in src/core/langgraph_agent.py
 
 **Checkpoint**: User Story 2 exposes a traceable, auditable session view.
 
@@ -112,19 +114,20 @@
 
 ### Tests for User Story 3
 
-- [ ] T033 [P] [US3] Write MCP connector Specify specs in specs/mcp_connector_spec.py
-- [ ] T034 [P] [US3] Write approval-gate API Specify specs in specs/approval_api_spec.py
-- [ ] T035 [US3] Write end-to-end ticketing Specify spec in specs/ticket_creation_flow_spec.py
-- [ ] T035a [US3] Add MCP ticket-creation failure-path Specify scenario in specs/ticket_creation_flow_spec.py
+- [X] T033 [P] [US3] Write MCP connector Specify specs in specs/mcp_connector_spec.py
+- [X] T034 [P] [US3] Write approval-gate API Specify specs in specs/approval_api_spec.py
+- [X] T035 [US3] Write end-to-end ticketing Specify spec in specs/ticket_creation_flow_spec.py
+- [X] T035a [US3] Add MCP ticket-creation failure-path Specify scenario in specs/ticket_creation_flow_spec.py
 
 ### Implementation for User Story 3
 
-- [ ] T036 [P] [US3] Implement MCP connector in src/connectors/mcp_connector.py
-- [ ] T037 [P] [US3] Implement MCP stub output fixture in docker/mcp_stub/
-- [ ] T038 [US3] Implement approval gate handling in src/core/approval_service.py
-- [ ] T039 [US3] Expose approval endpoint in src/api/main.py
-- [ ] T040 [US3] Extend reconciliation workflow to create tickets after approval in src/core/langgraph_agent.py
-- [ ] T040a [US3] Handle MCP failure responses with auditable status updates in src/core/langgraph_agent.py and src/core/approval_service.py
+- [X] T036 [P] [US3] Implement MCP connector in src/connectors/mcp_connector.py
+- [X] T037 [P] [US3] Implement MCP stub output fixture in docker/mcp_stub/
+- [X] T038 [US3] Implement approval gate handling in src/core/approval_service.py
+- [X] T039 [US3] Expose approval endpoint in src/api/main.py
+- [X] T040 [US3] Extend reconciliation workflow to create tickets after approval in src/core/langgraph_agent.py
+- [X] T040a [US3] Handle MCP failure responses with auditable status updates in src/core/langgraph_agent.py and src/core/approval_service.py
+- [X] T040b [US3] Add resume-from-paused session flow after approval in src/core/langgraph_agent.py and src/core/approval_service.py
 
 **Checkpoint**: User Story 3 completes the full platform demo with a controlled write action.
 
@@ -133,11 +136,13 @@
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 - [ ] T041 [P] Update README quickstart and demo instructions in README.md
-- [ ] T042 [P] Add health and readiness dependency checks in src/api/main.py
+- [X] T042 [P] Add health and readiness dependency checks in src/api/main.py
+- [X] T042a [P] Probe Postgres and Redis in /health and surface readiness failures without silently swallowing dependency errors in src/api/main.py
 - [ ] T043 Run hygiene suite and record checkpoint outputs in specs/001-settlement-reconciliation-mvp/quickstart.md
 - [ ] T044 [P] Add explicit local-model bootstrap commands (`ollama serve`, pull, smoke check, latency check) to README.md and quickstart.md
 - [ ] T045 Add env/local-only config validation and remove misleading Vault placeholders in docker-compose.yml, .env.example, and src/config/agent_config.py
 - [ ] T046 Add benchmark step that records end-to-end run time (<60s target) in specs/001-settlement-reconciliation-mvp/quickstart.md
+- [ ] T046a Reconcile session-storage wording in specs/001-settlement-reconciliation-mvp/tasks.md, plan.md, and related docs with the implemented SQLite-backed session manager or replace it with a true Mem0-backed implementation
 
 ---
 
