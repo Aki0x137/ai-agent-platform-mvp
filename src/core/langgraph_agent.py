@@ -1,3 +1,4 @@
+
 """LangGraph state flow for settlement reconciliation — T030.
 
 Graph topology
@@ -14,6 +15,11 @@ Demo data mirrors the rows seeded in docker/init.sql so the workflow
 produces deterministic, meaningful output without a live database.
 """
 from __future__ import annotations
+
+from rich.console import Console
+console = Console()
+
+
 
 import time
 from datetime import datetime
@@ -91,6 +97,8 @@ class ReconciliationAgent:
         def _load_data(state: AgentState) -> AgentState:
             t0 = time.time()
             session_id: str = state["session_id"]
+            console.print(f"[bold green]▶ [load_data][/bold green] Fetching internal and exchange records...")
+            console.print(f"[bold green]▶ [load_data][/bold green] Fetching internal and exchange records...")
 
             internal = DEMO_INTERNAL
             exchange = DEMO_EXCHANGE
@@ -126,6 +134,8 @@ class ReconciliationAgent:
         def _reconcile(state: AgentState) -> AgentState:
             t0 = time.time()
             session_id: str = state["session_id"]
+            console.print(f"[bold green]▶ [reconcile][/bold green] Finding discrepancies...")
+            console.print(f"[bold green]▶ [reconcile][/bold green] Finding discrepancies...")
 
             svc = ReconciliationService(discrepancy_threshold_usd=threshold)
             result = svc.reconcile(
@@ -169,9 +179,15 @@ class ReconciliationAgent:
 
         def _check_gate(state: AgentState) -> AgentState:
             result = state.get("reconciliation_result", {})
+            console.print(f"[bold green]▶ [check_gate][/bold green] Validating discrepancies against $[red]{threshold}[/red] threshold...")
+            console.print(f"[bold green]▶ [check_gate][/bold green] Validating discrepancies against $[red]{threshold}[/red] threshold...")
             discrepancies = result.get("discrepancies", [])
             critical = [d for d in discrepancies if d.get("severity") == "critical"]
             needs_approval = len(critical) > 0
+            if needs_approval:
+                console.print(f"  [bold red]⚠️ Human gate triggered![/bold red] Found {len(critical)} critical discrepancies.")
+            else:
+                console.print(f"  [bold cyan]✓ Automated reconciliation complete.[/bold cyan] No critical discrepancies.")
 
             al.log(state["session_id"], "human_gate", {
                 "gate_name": "create_investigation_ticket",
@@ -242,6 +258,8 @@ class ReconciliationAgent:
         Returns the final LangGraph state dict.
         """
         self.sm.update_status(session_id, "running")
+        console.print(f"[bold blue]🚀 Starting reconciliation session [yellow]{session_id}[/yellow] for [yellow]{settlement_date}[/yellow][/bold blue]")
+        console.print(f"[bold blue]🚀 Starting reconciliation session [yellow]{session_id}[/yellow] for [yellow]{settlement_date}[/yellow][/bold blue]")
         self.al.log(session_id, "checkpoint", {
             "step": "start",
             "settlement_date": settlement_date,

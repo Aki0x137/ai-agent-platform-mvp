@@ -4,6 +4,9 @@ import os
 import re
 from typing import Any, Dict, Optional
 from enum import Enum
+from rich.console import Console
+console = Console()
+
 
 
 class RoutingDecision(str, Enum):
@@ -138,18 +141,20 @@ class ModelRouter:
             RoutingDecision: Where to route the call
         """
         policy = model_policy or self.default_policy
-
+        policy = model_policy or self.default_policy
+        decision = policy
+        
         if policy == "sensitive":
-            return RoutingDecision.LOCAL
-
-        if policy == "general":
-            return RoutingDecision.CLOUD
-
-        # HYBRID: Per-tool-call routing based on payload
-        if self._is_sensitive_payload(payload):
-            return RoutingDecision.LOCAL
+            decision = RoutingDecision.LOCAL
+        elif policy == "general":
+            decision = RoutingDecision.CLOUD
+        elif self._is_sensitive_payload(payload):
+            decision = RoutingDecision.LOCAL
         else:
-            return RoutingDecision.REDACTED  # Redact before sending to cloud
+            decision = RoutingDecision.REDACTED
+            
+        console.print(f"[bold cyan]🤖 ModelRouter:[/bold cyan] Routing '{tool_name or 'unknown'}' [bold yellow]{policy}[/bold yellow] -> [bold magenta]{decision.value}[/bold magenta]")
+        return decision
 
     def _is_sensitive_payload(self, payload: Any) -> bool:
         """Check if payload is sensitive"""
