@@ -77,6 +77,11 @@ PYTHONPATH=. uv run python -m specify specs/*_spec.py
 ### 5. Trigger a Core Reconciliation Run (Live API)
 
 ```bash
+\nAlternatively, you can run the automated interactive shell script:
+```bash
+./demo.sh
+```
+
 curl -X POST http://localhost:8000/agents/trigger \
   -H 'Content-Type: application/json' \
   -d '{"agent_name":"settlement-reconciliation-agent","params":{"settlement_date":"2026-04-20"}}'
