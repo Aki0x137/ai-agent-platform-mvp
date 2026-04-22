@@ -1,74 +1,65 @@
-# FinAgent Platform MVP: Demo Pitch & Architecture Guide
+# FinAgent Platform: Technical Showcase & Architecture
 
-This document is designed to be read in **2-3 minutes** right before the demo. It breaks down the system's architecture, what each component does, and exactly how they interact under the hood.
+## 🚀 The 2-Minute Tech Pitch (Why This Matters)
+"Most enterprise 'AI apps' are just stateless wrappers around an OpenAI API. Today, we are demonstrating a **durable, stateful AI orchestration engine** built on **LangGraph, FastAPI, and local LLMs**. 
 
----
+We've solved the three hardest problems in financial AI: **Statefulness**, **Data Privacy**, and **System Safety**. 
 
-## ⏱️ The 2-Minute Elevator Pitch
-"Today, we're demonstrating the **FinAgent MVP**, a secure, stateful AI agent platform built for financial services. Rather than just wrapping an LLM in a UI, we've built a multi-agent orchestration engine that guarantees safety. 
+This platform doesn't just 'think'—it executes predictable Finite State Machines (FSMs). It intercepts its own memory, detects sensitive PII, and automatically hot-swaps to an air-gapped **Ollama/Mistral** model on the fly to prevent data leaks. And when it encounters a risky financial decision, it physically suspends its execution thread to an **SQLite checkpoint**, waits for human approval via our async API, and resumes seamlessly using the bleeding-edge **Model Context Protocol (MCP)** standard to interface with internal tooling."
 
-In this demo, the agent will perform an End-of-Day Settlement Reconciliation. It will fetch our internal ledger, fetch mock third-party exchange data, apply FX rates, and find discrepancies. But more importantly, you will see three enterprise patterns in action:
-1. **Dynamic Privacy Routing:** It inspects data on the fly. If it sees PII or sensitive financial data, it routes the LLM task to a local, air-gapped model (Ollama/Mistral). If benign, it uses the cloud.
-2. **Immutable Audit Trails:** Every routing decision, database query, and execution time is logged immutably.
-3. **Human-in-the-Loop:** Once it finds a variance over $500, the AI cannot proceed. It physically halts its execution state, waiting for a human analyst to approve the creation of an investigation ticket via MCP."
+## 🏗️ Core Architecture (Low-Level Design)
 
----
+We built this using a modern, asynchronous Python 3.11+ stack:
 
-## 🧩 High-Level Components
+*   **Stateful Orchestration Engine (LangGraph + SQLite):** The workflow is compiled as a `StateGraph`. Unlike standard ReAct loops that lose context or hallucinate, our agent transitions through strict deterministic nodes (`load_data` → `reconcile` → `check_gate`). We use SQLite as a checkpoint backend to freeze and rehydrate the graph's state mid-execution.
+*   **Zero-Trust Model Router (Privacy Engine):** Before any data hits an LLM, the `PayloadClassifier` analyzes the state matrix. If it detects SSNs, account numbers, or strict financial parameters, the `ModelRouter` severs cloud communication and routes the inference task to a local **Ollama** container (`gemma:2b` or `mistral`).
+*   **Asynchronous Connectors & MCP:** The agent doesn't talk directly to databases. It emits abstract intents that our `ConnectorRegistry` executes via **asyncpg** (for bare-metal Postgres speed) and HTTP. Crucially, write actions (like creating Jira tickets) use the **Model Context Protocol (MCP)**, decoupling the AI from the tool implementations entirely.
+*   **High-Concurrency API Layer (FastAPI + Pydantic):** The entire boundary is strongly typed and async. We capture execution traces and tool-call latency in real-time, backed by an append-only immutable audit logger.
 
-* **API Layer (FastAPI):** The entry point. Handles async REST requests to trigger runs, fetch session traces, and submit human approvals.
-* **Orchestrator (LangGraph):** The "Brain". It models the reconciliation workflow as a predictable finite state machine (Load → Reconcile → Check Gate → Await Approval → Finalize).
-* **Model Router & Classifier:** The "Bouncer". Uses regex and heuristics to catch SSNs, Account Numbers, and PII. Returns a routing decision (`LOCAL`, `CLOUD`, or `REDACTED`).
-* **Connectors:** The "Hands". A unified interface (`ConnectorRegistry`) to talk to Postgres (Ledger), REST (Exchange), and MCP (Jira/ServiceNow Stub).
-* **Session & Audit Managers:** The "Memory". Uses SQLite to track exactly what happened, persisting the LangGraph state so the agent can go to sleep while waiting for human input and wake back up perfectly.
+## 🔍 What You Are About to See (The Demo Execution Trace)
 
----
-
-## ⚙️ Low-Level System Interaction
-
-1. **Trigger Phase:** The user hits FastAPI with a payload. The system generates a `session_id`, sets up the SQLite state, and tells LangGraph to begin the `ReconciliationAgent` flow starting at the `load_data` node.
-2. **Data Aggregation & Routing:** Inside LangGraph, before calling out to an AI model, the payload passes through the **Payload Classifier**. If PII is found, the **Model Router** returns a local endpoint. The agent uses the **Postgres Connector** and **REST Connector** to gather the raw datasets.
-3. **Execution & Gate Check:** The agent reconciles the data and calculates the total financial variance. It hits the `check_gate` node. Since the variance > $500, it triggers the `human_gate` event, persists its state to SQLite, and halts.
-4. **Approval & Resumption:** The human calls the `/approve` endpoint. The API fetches the frozen state from SQLite, injects the human's approval payload, and tells LangGraph to resume. The agent wakes up, uses the **MCP Connector** to output a Jira ticket, and finalizes the run.
-
----
+1. **Initialization:** A `POST /agents/trigger` hits FastAPI. LangGraph initializes an `AgentState` matrix and fetches mock ledger rows from PostgreSQL and mock Exchange APIs.
+2. **Algorithmic & AI Hybrid Reconciliation:** The system bypasses the LLM for deterministic math (FX rates and matrix diffing). The LLM is strictly reserved for fuzzy-matching unstructured discrepancies, minimizing token waste. 
+3. **The Interrupt (Thread Suspension):** The computed variance exceeds our $500 hard-coded threshold. LangGraph emits a `human_gate` audit event, serializes its entire execution stack, dumps it to SQLite, and halts the active thread.
+4. **Human-in-the-Loop Resumption:** An analyst reviews the cryptographic trace via `GET /sessions/{id}`. Upon `POST /approve`, FastAPI rehydrates the LangGraph thread from SQLite memory. The agent wakes up, recognizes the approval, and fires an MCP intent to create an actionable ticket.
 
 ## 📊 Architecture Diagram
 
 ```mermaid
 sequenceDiagram
+    autonumber
     actor User as Treasury Analyst
-    participant API as FastAPI (Entrypoint)
-    participant Graph as LangGraph Orchestrator
-    participant Router as Model Router/Classifier
-    participant Connectors as Unified Connectors
-    participant Ext as Postgres / MCP Stub
+    participant API as FastAPI (Uvicorn/Async)
+    participant Graph as LangGraph (StateGraph)
+    participant Router as Zero-Trust Model Router
+    participant DB as Postgres / REST / MCP
+    participant Mem as SQL State Checkpointer
 
-    %% Step 1: Trigger & Route
-    User->>API: POST /agents/trigger
-    API->>Graph: Init StateMachine Session
-    Graph->>Router: Assess Context for PII/Sensitivity
-    Router-->>Graph: Decision: Route LOCAL (Ollama)
+    %% Execution & Routing
+    User->>+API: POST /agents/trigger {date: "2026-04-20"}
+    API->>+Graph: Graph.invoke(initial_state)
+    Graph->>DB: asyncpg.fetch() (Internal Ledger)
+    Graph->>Router: route_call(payload)
     
-    %% Step 2: Data & Reconcile
-    Graph->>Connectors: Fetch Ledger & Exchange Data
-    Connectors->>Ext: SQL Query / API Call
-    Ext-->>Connectors: Raw Datasets
-    Connectors-->>Graph: Normalized Records
-    Graph->>Graph: Calculate Variance (>$500)
+    alt Contains PII / Financial Data
+        Router-->>Graph: Endpoint = LOCAL (Ollama/Mistral)
+    else Benign Data
+        Router-->>Graph: Endpoint = CLOUD (Redacted)
+    end
     
-    %% Step 3: Human Gate
-    Graph->>Graph: Pause Execution (Save State to SQLite)
-    Graph-->>API: Status: Paused (Needs Approval)
-    API-->>User: Return Trace & Human Gate Alert
+    %% Gate & Suspension
+    Graph->>Graph: Calculate Variance = $1098.75 (> $500 Threshold)
+    Graph->>Mem: Serialize & Freeze Thread State
+    Graph-->>-API: Thread Suspended (needs_approval)
+    API-->>-User: Return session_id & hitl_status
 
-    %% Step 4: Human-in-the-loop Resume
-    User->>API: POST /sessions/{id}/approve
-    API->>Graph: Resume Session from SQLite State
-    Graph->>Connectors: Trigger MCP Action (Create Ticket)
-    Connectors->>Ext: Write to Mock Jira
-    Ext-->>Connectors: Ticket ID & URL
-    Connectors-->>Graph: Return Success Evidence
-    Graph-->>API: Session Completed
-    API-->>User: Final Trace & Ticket Reference
+    %% Resumption & Standardized Output
+    User->>+API: POST /sessions/{session_id}/approve
+    API->>Mem: Rehydrate LangGraph Thread
+    API->>+Graph: Graph.resume(approved=True)
+    Graph->>DB: MCP Intent -> target: "create_ticket"
+    DB-->>Graph: MCP Standardized Result (Ticket URL)
+    Graph->>Mem: Commit Final State
+    Graph-->>-API: Final Output Matrix
+    API-->>-User: Run Completed & Immutable Trace Evidence
 ```
