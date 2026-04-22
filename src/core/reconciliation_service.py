@@ -41,8 +41,12 @@ class ReconciliationService:
         (500, "critical"),
     ]
 
-    def __init__(self, discrepancy_threshold_usd: float = 500.0) -> None:
-        self.threshold = discrepancy_threshold_usd
+    def __init__(
+        self,
+        discrepancy_threshold_usd: float = 500.0,
+        discrepancy_threshold_inr: float | None = None,
+    ) -> None:
+        self.threshold = discrepancy_threshold_inr if discrepancy_threshold_inr is not None else discrepancy_threshold_usd
 
     # ── Public API ──────────────────────────────────────────────────────────
 
@@ -68,7 +72,7 @@ class ReconciliationService:
                 self._compare(pid, int_rec, ext_rec, fx_rates, result)
             elif int_rec and not ext_rec:
                 # Present internally, missing from exchange
-                variance = self._to_usd(int_rec["amount_usd"], int_rec.get("currency", "USD"), fx_rates)
+                variance = self._to_usd(self._record_amount(int_rec), int_rec.get("currency", "USD"), fx_rates)
                 result.discrepancies.append({
                     "payout_id": pid,
                     "type": "missing_exchange",
@@ -78,7 +82,7 @@ class ReconciliationService:
                 result.total_variance_usd += variance
             else:
                 # Present in exchange, missing internally
-                variance = self._to_usd(ext_rec["amount_usd"], ext_rec.get("currency", "USD"), fx_rates)
+                variance = self._to_usd(self._record_amount(ext_rec), ext_rec.get("currency", "USD"), fx_rates)
                 result.discrepancies.append({
                     "payout_id": pid,
                     "type": "missing_internal",
@@ -101,8 +105,12 @@ class ReconciliationService:
         result: ReconciliationResult,
     ) -> None:
         currency = int_rec.get("currency", "USD")
-        int_usd_ok, int_usd = self._safe_to_usd(int_rec["amount_usd"], currency, fx_rates)
-        ext_usd_ok, ext_usd = self._safe_to_usd(ext_rec["amount_usd"], ext_rec.get("currency", currency), fx_rates)
+        int_usd_ok, int_usd = self._safe_to_usd(self._record_amount(int_rec), currency, fx_rates)
+        ext_usd_ok, ext_usd = self._safe_to_usd(
+            self._record_amount(ext_rec),
+            ext_rec.get("currency", currency),
+            fx_rates,
+        )
 
         if not int_usd_ok or not ext_usd_ok:
             result.discrepancies.append({
@@ -134,6 +142,13 @@ class ReconciliationService:
         if rate is None:
             return amount  # fallback — treat as USD
         return amount * rate
+
+    def _record_amount(self, record: dict[str, Any]) -> float:
+        if "amount_usd" in record:
+            return record["amount_usd"]
+        if "amount_inr" in record:
+            return record["amount_inr"]
+        raise KeyError("Record is missing both amount_usd and amount_inr")
 
     def _safe_to_usd(self, amount: float, currency: str, fx_rates: dict[str, float]) -> tuple[bool, float]:
         """Returns (ok, usd_amount). ok=False when FX rate is missing."""

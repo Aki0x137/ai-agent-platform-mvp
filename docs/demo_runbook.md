@@ -214,3 +214,39 @@ docker compose ps
 ```
 
 Use these only if the main flow does not come up cleanly.
+
+**Check Ollama models:**
+
+```bash
+# List all available models
+curl http://localhost:11434/api/tags
+
+# Show currently running models
+curl http://localhost:11434/api/ps
+```
+
+These commands verify that Ollama has models loaded and ready to serve. Use these if the reconciliation agent is timing out or not responding.
+
+## Teardown
+
+After the demo is complete, use these commands to cleanly shut down and remove all resources:
+
+**Stop and remove all containers (keeps data volumes):**
+
+```bash
+docker compose down
+```
+
+**Stop and remove all containers and volumes (full cleanup):**
+
+```bash
+docker compose down -v
+```
+
+**What you are doing conceptually:**
+
+The first command stops all services and removes containers and networks, but preserves the data volumes for PostgreSQL, Redis, and Ollama in case you want to inspect or reuse them.
+
+The second command performs a full teardown, including deletion of all volumes. Use this if you want to start fresh on the next demo run.
+
+**Note:** The `-v` flag removes named volumes defined in the compose file. Session data stored in the database and audit logs will be lost. Use the non-volume version if you want to preserve state between demo runs.

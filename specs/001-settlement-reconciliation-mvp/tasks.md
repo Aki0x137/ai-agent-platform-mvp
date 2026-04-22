@@ -168,6 +168,7 @@
 
 - [ ] T047 **True SQLite Integration**: Replace the SQLite-backed session manager with a true SQLite-backed implementation (vLLM instance) for long-term distributed session memory and semantic retrieval.
 - [ ] T048 **Vault Secret Manager Integration**: Replace simple env vars with a mock Vault adapter mimicking enterprise secret retrieval.
+- [ ] T049 **Docker GPU Enablement for Ollama**: Install and document NVIDIA Container Toolkit for Fedora hosts, configure Docker runtime/CDI support, add a GPU-specific compose path or override, and validate Ollama runs on the NVIDIA GPU instead of CPU.
 
 ---
 
