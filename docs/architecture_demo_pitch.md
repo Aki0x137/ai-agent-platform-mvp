@@ -5,23 +5,23 @@
 
 We've solved the three hardest problems in financial AI: **Statefulness**, **Data Privacy**, and **System Safety**. 
 
-This platform doesn't just 'think'—it executes predictable Finite State Machines (FSMs). It intercepts its own memory, detects sensitive PII, and automatically hot-swaps to an air-gapped **Ollama/Mistral** model on the fly to prevent data leaks. And when it encounters a risky financial decision, it physically suspends its execution thread to an **SQLite checkpoint**, waits for human approval via our async API, and resumes seamlessly using the bleeding-edge **Model Context Protocol (MCP)** standard to interface with internal tooling."
+This platform doesn't just 'think'—it executes a predictable Finite State Machine (FSM). The current demo runs a deterministic reconciliation workflow through explicit graph nodes, persists session state and audit checkpoints in **SQLite**, pauses when a risky financial decision needs review, and then resumes after approval to create a ticket through the **Model Context Protocol (MCP)**. The result is a local, auditable, human-in-the-loop execution path rather than a black-box prompt loop."
 
 ## 🏗️ Core Architecture (Low-Level Design)
 
 We built this using a modern, asynchronous Python 3.11+ stack:
 
-*   **Stateful Orchestration Engine (LangGraph + SQLite):** The workflow is compiled as a `StateGraph`. Unlike standard ReAct loops that lose context or hallucinate, our agent transitions through strict deterministic nodes (`load_data` → `reconcile` → `check_gate`). We use SQLite as a checkpoint backend to freeze and rehydrate the graph's state mid-execution.
-*   **Zero-Trust Model Router (Privacy Engine):** Before any data hits an LLM, the `PayloadClassifier` analyzes the state matrix. If it detects SSNs, account numbers, or strict financial parameters, the `ModelRouter` severs cloud communication and routes the inference task to a local **Ollama** container (`gemma:2b` or `mistral`).
-*   **Asynchronous Connectors & MCP:** The agent doesn't talk directly to databases. It emits abstract intents that our `ConnectorRegistry` executes via **asyncpg** (for bare-metal Postgres speed) and HTTP. Crucially, write actions (like creating Jira tickets) use the **Model Context Protocol (MCP)**, decoupling the AI from the tool implementations entirely.
-*   **High-Concurrency API Layer (FastAPI + Pydantic):** The entire boundary is strongly typed and async. We capture execution traces and tool-call latency in real-time, backed by an append-only immutable audit logger.
+*   **Stateful Orchestration Engine (LangGraph + SQLite):** The workflow is compiled as a `StateGraph` with strict deterministic nodes (`load_data` → `reconcile` → `check_gate`). Session status, tool calls, output summaries, and checkpoint events are persisted into SQLite-backed session and audit stores so the run can pause and resume safely.
+*   **Deterministic Reconciliation Core:** The current demo path does not rely on an LLM for the actual reconciliation step. It compares seeded internal and exchange records, applies FX conversion, computes discrepancies, and marks critical variances above the configured ₹500 threshold.
+*   **Approval Gate + MCP Ticketing:** Once the threshold is breached, the workflow stores the reconciliation result, marks the session as `paused`, and waits for human approval. After approval, an MCP connector creates an investigation ticket and the session is marked `completed`.
+*   **FastAPI Trace Surface:** FastAPI exposes trigger, health, session trace, and approval endpoints. The trace response includes redacted tool-call payloads, immutable audit events, and the persisted reconciliation output for demo walkthroughs.
 
 ## 🔍 What You Are About to See (The Demo Execution Trace)
 
-1. **Initialization:** A `POST /agents/trigger` hits FastAPI. LangGraph initializes an `AgentState` matrix and fetches mock ledger rows from PostgreSQL and mock Exchange APIs.
-2. **Algorithmic & AI Hybrid Reconciliation:** The system bypasses the LLM for deterministic math (FX rates and matrix diffing). The LLM is strictly reserved for fuzzy-matching unstructured discrepancies, minimizing token waste. 
-3. **The Interrupt (Thread Suspension):** The computed variance exceeds our ₹500 hard-coded threshold. LangGraph emits a `human_gate` audit event, serializes its entire execution stack, dumps it to SQLite, and halts the active thread.
-4. **Human-in-the-Loop Resumption:** An analyst reviews the cryptographic trace via `GET /sessions/{id}`. Upon `POST /approve`, FastAPI rehydrates the LangGraph thread from SQLite memory. The agent wakes up, recognizes the approval, and fires an MCP intent to create an actionable ticket.
+1. **Initialization:** A `POST /agents/trigger` hits FastAPI. The API creates a session record in SQLite, then invokes the LangGraph workflow with a `settlement_date`.
+2. **Deterministic Reconciliation:** The graph loads seeded internal and exchange records that mirror the local demo fixtures, applies FX rates, and computes matched rows plus discrepancies.
+3. **The Interrupt (Human Gate):** If any discrepancy exceeds the ₹500 threshold, the workflow writes checkpoint and `human_gate` audit events, persists the reconciliation output, marks the session `paused`, and returns control to the API.
+4. **Human-in-the-Loop Completion:** A product manager reviews the trace via `GET /sessions/{id}`. On `POST /sessions/{id}/approve`, the approval service calls the MCP connector to create a ticket, records the approval checkpoint, and marks the session `completed`.
 
 ## 📊 Architecture Diagram
 
@@ -31,35 +31,35 @@ sequenceDiagram
     actor User as Product Manager
     participant API as FastAPI (Uvicorn/Async)
     participant Graph as LangGraph (StateGraph)
-    participant Router as Zero-Trust Model Router
-    participant DB as Postgres / REST / MCP
-    participant Mem as SQL State Checkpointer
+    participant Sess as SQLite Session Store
+    participant Audit as SQLite Audit Logger
+    participant MCP as MCP Ticket Connector
 
-    %% Execution & Routing
+    %% Trigger and execution
     User->>+API: POST /agents/trigger {date: "2026-04-20"}
-    API->>+Graph: Graph.invoke(initial_state)
-    Graph->>DB: asyncpg.fetch() (Internal Ledger)
-    Graph->>Router: route_call(payload)
+    API->>Sess: create_session()
+    API->>+Graph: run(session_id, settlement_date)
+    Graph->>Audit: log(start / tool_call / checkpoint)
+    Graph->>Sess: add_tool_call() / set_output()
     
-    alt Contains PII / Financial Data
-        Router-->>Graph: Endpoint = LOCAL (Ollama/Mistral)
-    else Benign Data
-        Router-->>Graph: Endpoint = CLOUD (Redacted)
-    end
-    
-    %% Gate & Suspension
+    %% Gate and pause
     Graph->>Graph: Calculate Variance = ₹1098.75 (> ₹500 Threshold)
-    Graph->>Mem: Serialize & Freeze Thread State
-    Graph-->>-API: Thread Suspended (needs_approval)
-    API-->>-User: Return session_id & hitl_status
+    Graph->>Audit: log(human_gate)
+    Graph->>Sess: update_status(paused)
+    Graph-->>-API: Return needs_approval = true
+    API-->>-User: Return session_id and paused status
 
-    %% Resumption & Standardized Output
+    %% Approval and ticketing
+    User->>+API: GET /sessions/{session_id}
+    API->>Sess: get_session()
+    API->>Audit: get_events()
+    API-->>-User: Return trace, tool calls, output
+
     User->>+API: POST /sessions/{session_id}/approve
-    API->>Mem: Rehydrate LangGraph Thread
-    API->>+Graph: Graph.resume(approved=True)
-    Graph->>DB: MCP Intent -> target: "create_ticket"
-    DB-->>Graph: MCP Standardized Result (Ticket URL)
-    Graph->>Mem: Commit Final State
-    Graph-->>-API: Final Output Matrix
-    API-->>-User: Run Completed & Immutable Trace Evidence
+    API->>+MCP: create_ticket(session evidence)
+    MCP-->>-API: Ticket reference
+    API->>Graph: resume_after_approval(...)
+    Graph->>Audit: log(resume/finalize checkpoints)
+    Graph->>Sess: update_status(completed)
+    API-->>-User: Run completed with ticket reference
 ```
